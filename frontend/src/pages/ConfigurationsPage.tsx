@@ -8,7 +8,7 @@ export const ConfigurationsPage = () => {
     <div className="px-4 py-6">
       <PageHeader 
         title="Configuracoes"
-        titleColor="text-[#4a9a4c]"
+        titleColor="text-[#7B5CE6]"
       />
 
       <div className="mt-4 max-w-[720px]">

@@ -23,10 +23,10 @@ export const SalesPage = () => {
     <div className="px-4 py-6">
       <PageHeader
         title="Vendas"
-        titleColor="text-[#4a9a4c]"
+        titleColor="text-[#7B5CE6]"
         action={
-          <span className="inline-flex h-10 items-center gap-2 rounded-full bg-[#fce9a8] px-5 text-sm font-medium text-[#a8781c]">
-            <span className="h-2 w-2 rounded-full bg-[#f1b62d]" />
+          <span className="inline-flex h-10 items-center gap-2 rounded-full bg-[#e4f2e2] px-5 text-sm font-medium text-[#4a9a4c]">
+            <span className="h-2 w-2 rounded-full bg-[#4a9a4c]" />
             {storeStatus}
           </span>
         }
@@ -46,7 +46,7 @@ export const SalesPage = () => {
           </Panel>
 
           <section>
-            <h2 className="text-[17px] font-bold text-[#4a9a4c]">Produtos populares</h2>
+            <h2 className="text-[17px] font-bold text-[#7B5CE6]">Produtos populares</h2>
             <div className="mt-3 grid grid-cols-2 gap-3">
               {view.popularProducts.map((product) => (
                 <button
@@ -61,7 +61,7 @@ export const SalesPage = () => {
         </div>
 
         <div className="space-y-3">
-          <Panel title="Pedido atual" className="border-[#dceccf]">
+          <Panel title="Pedido atual" className="border-[#e0d8fb]">
             <div className="space-y-1 text-[15px] text-[#66645f]">
               {view.cartItems.map((item) => (
                 <p key={item.id}>
@@ -80,7 +80,7 @@ export const SalesPage = () => {
             </div>
           </Panel>
 
-          <Panel title="Pagamento" className="border-[#f8e2ad]">
+          <Panel title="Pagamento" className="border-[#d9ead7]">
             <div className="space-y-3 text-[15px] text-[#6b6a64]">
               {['PIX', 'Cartao de credito', 'Dinheiro'].map((method) => (
                 <label key={method} className="flex items-center gap-3">
@@ -92,7 +92,7 @@ export const SalesPage = () => {
             </div>
           </Panel>
 
-          <div className="rounded-none bg-[#e3eee2] px-5 py-4 text-[#36714b]">
+          <div className="rounded-none bg-[#efe9fe] px-5 py-4 text-[#7B5CE6]">
             <p className="text-[17px] font-bold">✓ {view.statusTitle}</p>
             <p className="mt-2 text-[15px]">{view.statusMessage}</p>
           </div>

@@ -21,7 +21,7 @@ export const ProductsPage = () => {
     <div className="px-4 py-6">
       <PageHeader
         title="Produtos"
-        titleColor="text-[#4a9a4c]"
+        titleColor="text-[#7B5CE6]"
         action={<Button className="min-w-[154px]">Novo Produto</Button>}
       />
 

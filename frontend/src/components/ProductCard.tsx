@@ -19,7 +19,7 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           <div className="mt-4">
             <StatusBadge status={product.status} />
           </div>
-          <p className={`mt-4 text-[15px] ${hasStock ? 'text-[#69a56e]' : 'text-[#cf6885]'}`}>
+          <p className={`mt-4 text-[15px] ${hasStock ? 'text-[#7B5CE6]' : 'text-[#cf6885]'}`}>
             Disponivel: {product.stock} unidades
           </p>
         </div>

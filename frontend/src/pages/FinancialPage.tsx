@@ -28,8 +28,8 @@ export const FinancialPage = () => {
     <div className="px-4 py-6">
       <PageHeader
         title="Financeiro"
-        titleColor="text-[#4a9a4c]"
-        action={<span className="inline-flex h-10 items-center rounded-full bg-[#fce9a8] px-5 text-sm font-semibold text-[#a8781c]">Hoje</span>}
+        titleColor="text-[#7B5CE6]"
+        action={<span className="inline-flex h-10 items-center rounded-full bg-[#e4f2e2] px-5 text-sm font-semibold text-[#4a9a4c]">Hoje</span>}
       />
 
       <section className="mt-4 grid grid-cols-3 gap-3">
@@ -65,7 +65,7 @@ export const FinancialPage = () => {
               <div key={entry.id} className="grid grid-cols-[120px_1fr_140px] border-t border-[#efeae1] px-5 py-4 text-[15px] text-brand-bark">
                 <span>{entry.time}</span>
                 <span>{entry.description}</span>
-                <span className={`text-right font-semibold ${entry.type === 'entrada' ? 'text-[#58b37a]' : 'text-[#f08f69]'}`}>
+                <span className={`text-right font-semibold ${entry.type === 'entrada' ? 'text-[#7B5CE6]' : 'text-[#4a9a4c]'}`}>
                   {entry.type === 'entrada' ? '+' : '-'} {formatCurrency(entry.amount)}
                 </span>
               </div>

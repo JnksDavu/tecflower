@@ -3,8 +3,8 @@ import { formatCurrency } from '@/utils/formatters';
 
 const toneClassMap = {
   neutral: 'text-brand-bark',
-  positive: 'text-[#2d9b52]',
-  negative: 'text-[#d95a2f]',
+  positive: 'text-[#7B5CE6]',
+  negative: 'text-[#4a9a4c]',
 };
 
 interface MetricCardProps {
