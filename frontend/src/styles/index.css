@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color: #372b2e;
+  background-color: #f5f1e8;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-width: 1280px;
+  min-height: 100vh;
+  font-family: Inter, 'SF Pro Display', 'SF Pro Text', Poppins, Montserrat, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  letter-spacing: 0.01em;
+  background: #f7f4ed;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  letter-spacing: 0.01em;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(125, 63, 96, 0.24);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(217, 208, 172, 0.18);
+}
