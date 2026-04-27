@@ -7,7 +7,7 @@ export const ConfigurationsPage = () => {
   return (
     <div className="px-4 py-6">
       <PageHeader 
-        title="Configuracoes"
+        title="Configurações do sistema"
         titleColor="text-[#7B5CE6]"
       />
 
