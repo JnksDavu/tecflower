@@ -1,12 +1,12 @@
 {
-  "name": "tecflower-backend",
+  "name": "tecflower-server",
   "private": true,
   "version": "0.1.0",
   "type": "module",
   "scripts": {
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
-    "build": "echo 'No build step configured for backend'"
+    "build": "echo 'No build step configured for server'"
   },
   "dependencies": {
     "cors": "^2.8.5",
