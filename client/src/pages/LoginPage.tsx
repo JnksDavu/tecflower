@@ -1,19 +1,21 @@
 import type { FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import tecflowerLogo from '@/assets/tecflowerLogo.png';
 
 export const LoginPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const successMessage = location.state?.message as string | undefined;
+
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     navigate('/vendas');
   };
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#f7f4ed] px-4 py-8">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(141,97,255,0.12),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(85,34,133,0.08),transparent_24%),linear-gradient(135deg,rgba(255,255,255,0.3),rgba(247,244,237,0.92))]" />
+      <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(247,244,237,0.98)_0%,rgba(239,231,255,0.92)_100%)]" />
       <div className="relative grid w-full max-w-7xl min-h-[950px] overflow-hidden rounded-[36px] bg-white shadow-[0_32px_90px_rgba(24,8,43,0.28)] lg:grid-cols-[1.05fr_0.95fr]">
         <section className="relative hidden min-h-[950px] overflow-hidden bg-[linear-gradient(160deg,rgba(56,18,93,0.98)_0%,rgba(102,45,170,0.96)_54%,rgba(166,116,255,0.92)_100%)] p-12 text-white lg:flex lg:flex-col lg:justify-between">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.18),transparent_22%),radial-gradient(circle_at_80%_30%,rgba(255,255,255,0.12),transparent_18%),radial-gradient(circle_at_40%_80%,rgba(255,255,255,0.1),transparent_24%)]" />
           <div className="relative">
             <img
               src={tecflowerLogo}
@@ -47,6 +49,11 @@ export const LoginPage = () => {
                 <h2 className="text-4xl font-semibold tracking-[-0.03em] text-[#2e124b]">Acesse sua conta</h2>
               </div>
             </div>
+            {successMessage ? (
+              <div className="rounded-2xl border border-[#d9f0df] bg-[#f4fbf6] px-4 py-3 text-sm text-[#27633a]">
+                {successMessage}
+              </div>
+            ) : null}
             <form className="space-y-5" onSubmit={handleSubmit}>
               <label className="block space-y-2">
                 <span className="text-sm font-semibold text-[#45216e]">E-mail</span>
@@ -80,6 +87,12 @@ export const LoginPage = () => {
                 Entrar
               </button>
             </form>
+            <p className="text-sm text-[#6c5a88]">
+              Ainda nao criou sua conta?{' '}
+              <Link to="/cadastro" className="font-semibold text-[#7f54d9] transition hover:text-[#6331cb]">
+                Cadastrar conta
+              </Link>
+            </p>
           </div>
         </section>
       </div>

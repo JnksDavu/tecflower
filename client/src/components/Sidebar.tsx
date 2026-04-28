@@ -35,7 +35,7 @@ const iconMap = {
 
 export const Sidebar = () => {
   return (
-    <aside className="flex w-[236px] flex-col border-r border-white/15 bg-[#7B5CE6]">
+    <aside className="flex w-[236px] flex-col border-r border-white/15 bg-[linear-gradient(160deg,rgba(56,18,93,0.98)_0%,rgba(102,45,170,0.96)_54%,rgba(166,116,255,0.92)_100%)]">
       <div className="border-b border-white/15 px-4 py-3">
         <div className="flex h-[64px] items-center justify-start overflow-hidden">
           <img
@@ -54,7 +54,7 @@ export const Sidebar = () => {
               to={item.to}
               className={({ isActive }) =>
                 `flex h-11 items-center gap-3 rounded-full px-5 text-[18px] font-semibold tracking-[0.01em] transition ${
-                  isActive ? 'bg-[#6A4BD5] text-white' : 'text-white hover:bg-[#6A4BD5] hover:text-white'
+                  isActive ? 'bg-white/10 text-white backdrop-blur-sm' : 'text-white hover:bg-white/10 hover:text-white'
                 }`
               }
             >

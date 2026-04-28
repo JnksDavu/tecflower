@@ -5,11 +5,13 @@ import { ProductsPage } from './pages/ProductsPage';
 import { SalesPage } from './pages/SalesPage';
 import { ConfigurationsPage } from './pages/ConfigurationsPage';
 import { LoginPage } from './pages/LoginPage';
+import { RegisterPage } from './pages/RegisterPage';
 
 const App = () => {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/cadastro" element={<RegisterPage />} />
       <Route element={<AppLayout />}>
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/vendas" element={<SalesPage />} />
