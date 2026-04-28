@@ -4,12 +4,14 @@ import { FinancialPage } from './pages/FinancialPage';
 import { ProductsPage } from './pages/ProductsPage';
 import { SalesPage } from './pages/SalesPage';
 import { ConfigurationsPage } from './pages/ConfigurationsPage';
+import { LoginPage } from './pages/LoginPage';
 
 const App = () => {
   return (
     <Routes>
+      <Route path="/login" element={<LoginPage />} />
       <Route element={<AppLayout />}>
-        <Route path="/" element={<Navigate to="/vendas" replace />} />
+        <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/vendas" element={<SalesPage />} />
         <Route path="/produtos" element={<ProductsPage />} />
         <Route path="/financeiro" element={<FinancialPage />} />

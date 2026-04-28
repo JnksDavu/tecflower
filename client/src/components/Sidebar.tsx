@@ -36,12 +36,12 @@ const iconMap = {
 export const Sidebar = () => {
   return (
     <aside className="flex w-[236px] flex-col border-r border-white/15 bg-[#7B5CE6]">
-      <div className="border-b border-white/15 px-4 py-5">
-        <div className="flex h-[52px] items-center justify-start overflow-hidden">
+      <div className="border-b border-white/15 px-4 py-3">
+        <div className="flex h-[64px] items-center justify-start overflow-hidden">
           <img
             src={tecflowerLogo}
             alt="TecFlower"
-            className="w-[150px] max-w-none translate-x-6 scale-[1.72] object-contain brightness-0 invert"
+            className="h-auto w-full max-w-[200px] object-contain object-left"
           />
         </div>
       </div>
