@@ -35,7 +35,7 @@ export interface SalesView {
   total: number;
   customerName: string;
   customerCpf: string;
-  selectedPayment: 'PIX' | 'Cartao de credito' | 'Dinheiro';
+  selectedPayment: 'PIX' | 'Cartão de crédito' | 'Dinheiro';
   paidAmount: number;
   statusTitle: string;
   statusMessage: string;

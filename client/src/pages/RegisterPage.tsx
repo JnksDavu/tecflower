@@ -42,11 +42,11 @@ export const RegisterPage = () => {
       navigate('/login', {
         replace: true,
         state: {
-          message: 'Conta criada com sucesso. Agora voce ja pode entrar com seu email e senha.',
+          message: 'Conta criada com sucesso. Agora você já pode entrar com seu e-mail e senha.',
         },
       });
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Nao foi possivel criar a conta.');
+      setErrorMessage(error instanceof Error ? error.message : 'Não foi possível criar a conta.');
     } finally {
       setIsSubmitting(false);
     }
@@ -77,6 +77,9 @@ export const RegisterPage = () => {
                   Criar conta
                 </h2>
               </div>
+              <p className="text-sm leading-6 text-[#6c5a88]">
+                Cadastre sua conta e o usuário administrador que vai acessar o sistema.
+              </p>
             </div>
             {errorMessage ? (
               <div className="rounded-2xl border border-[#f3d5df] bg-[#fff7f9] px-4 py-3 text-sm text-[#9a3253]">
@@ -96,7 +99,7 @@ export const RegisterPage = () => {
                 />
               </label>
               <label className="block space-y-2">
-                <span className="text-sm font-semibold text-[#45216e]">Usuario</span>
+                <span className="text-sm font-semibold text-[#45216e]">Usuário</span>
                 <input
                   required
                   value={form.username}
@@ -106,6 +109,9 @@ export const RegisterPage = () => {
                   className="h-14 w-full rounded-2xl border border-[#e5ddf4] bg-[#f7f4ff] px-4 text-base text-[#2e124b] outline-none transition focus:border-[#7f54d9] focus:bg-white focus:ring-4 focus:ring-[#b89cff]/25"
                 />
               </label>
+              <p className="rounded-2xl border border-[#efe8fb] bg-[#fcfaff] px-4 py-3 text-sm leading-6 text-[#6c5a88]">
+                O slug da conta será gerado automaticamente a partir do nome informado, em minúsculo e sem caracteres especiais.
+              </p>
               <label className="block space-y-2">
                 <span className="text-sm font-semibold text-[#45216e]">E-mail</span>
                 <input
@@ -125,7 +131,7 @@ export const RegisterPage = () => {
                   value={form.password}
                   onChange={handleChange('password')}
                   type="password"
-                  placeholder="Minimo de 6 caracteres"
+                  placeholder="Mínimo de 6 caracteres"
                   className="h-14 w-full rounded-2xl border border-[#e5ddf4] bg-[#f7f4ff] px-4 text-base text-[#2e124b] outline-none transition focus:border-[#7f54d9] focus:bg-white focus:ring-4 focus:ring-[#b89cff]/25"
                 />
               </label>
@@ -138,7 +144,7 @@ export const RegisterPage = () => {
               </button>
             </form>
             <p className="text-sm text-[#6c5a88]">
-              Ja tem acesso?{' '}
+              Já tem acesso?{' '}
               <Link to="/login" className="font-semibold text-[#7f54d9] transition hover:text-[#6331cb]">
                 Voltar para o login
               </Link>

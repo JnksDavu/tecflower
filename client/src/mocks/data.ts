@@ -1,18 +1,6 @@
-import type {
-  AppUser,
-  FinanceEntry,
-  FinancePaymentMethod,
-  FinanceSummaryCard,
-  Product,
-  SalesView,
-} from '@/models/types';
+import type { FinanceEntry, FinancePaymentMethod, FinanceSummaryCard, Product, SalesView } from '@/models/types';
 
-export const sidebarUser: AppUser = {
-  name: 'Ana Souza',
-  email: 'ana@tecflower.com',
-};
-
-export const storeStatus = 'Loja aberta - Sabado';
+export const storeStatus = 'Loja aberta - Sábado';
 
 export const productsMock: Product[] = [
   {
@@ -27,9 +15,9 @@ export const productsMock: Product[] = [
   },
   {
     id: 2,
-    name: 'Orquidea Phalaenopsis',
+    name: 'Orquídea Phalaenopsis',
     sku: 'FLR-014',
-    description: 'Vaso ceramico incluso',
+    description: 'Vaso cerâmico incluso',
     category: 'Vasos',
     stock: 5,
     price: 129,
@@ -60,12 +48,12 @@ export const productsMock: Product[] = [
 export const salesViewMock: SalesView = {
   cartItems: [
     { id: 1, name: 'Buque Rosas', quantity: 2 },
-    { id: 2, name: 'Vaso Ceramica', quantity: 1 },
-    { id: 3, name: 'Cartao personalizado', quantity: 1 },
+    { id: 2, name: 'Vaso Cerâmica', quantity: 1 },
+    { id: 3, name: 'Cartão personalizado', quantity: 1 },
   ],
   popularProducts: [
     { id: 1, name: 'Buque Rosas', price: 89 },
-    { id: 2, name: 'Orquidea', price: 65 },
+    { id: 2, name: 'Orquídea', price: 65 },
     { id: 3, name: 'Girassol', price: 24 },
     { id: 4, name: 'Cesta Presente', price: 120 },
   ],
@@ -74,21 +62,21 @@ export const salesViewMock: SalesView = {
   customerCpf: '',
   selectedPayment: 'PIX',
   paidAmount: 350,
-  statusTitle: 'Venda concluida com sucesso',
+  statusTitle: 'Venda concluída com sucesso',
   statusMessage: 'Comprovante enviado no WhatsApp. Estoque atualizado imediatamente.',
 };
 
 export const financeSummaryMock: FinanceSummaryCard[] = [
   { id: 'cash', title: 'Resumo de Caixa', value: 3840, caption: 'Saldo atualizado as 18:30', tone: 'neutral' },
   { id: 'income', title: 'Entradas do Dia', value: 2460, caption: '34 vendas registradas', tone: 'positive' },
-  { id: 'expense', title: 'Saidas do Dia', value: 740, caption: '12 despesas lancadas', tone: 'negative' },
+  { id: 'expense', title: 'Saídas do Dia', value: 740, caption: '12 despesas lançadas', tone: 'negative' },
 ];
 
 export const financePaymentMethodsMock: FinancePaymentMethod[] = [
   { id: 1, label: 'PIX', amount: 1320, tone: 'sand' },
-  { id: 2, label: 'Cartao de Credito', amount: 780, tone: 'sage' },
+  { id: 2, label: 'Cartão de Crédito', amount: 780, tone: 'sage' },
   { id: 3, label: 'Dinheiro', amount: 290, tone: 'blue' },
-  { id: 4, label: 'Debito', amount: 70, tone: 'lilac' },
+  { id: 4, label: 'Débito', amount: 70, tone: 'lilac' },
 ];
 
 export const financeEntriesMock: FinanceEntry[] = [

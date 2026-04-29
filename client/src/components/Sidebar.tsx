@@ -1,12 +1,12 @@
-import { NavLink } from 'react-router-dom';
-import { sidebarUser } from '@/mocks/data';
+import { NavLink, useNavigate } from 'react-router-dom';
 import tecflowerLogo from '@/assets/tecflowerLogo.png';
+import { useAuth } from '@/contexts/AuthContext';
 
 const items = [
   { to: '/vendas', label: 'Vendas', icon: 'sales' },
   { to: '/produtos', label: 'Produtos', icon: 'products' },
   { to: '/financeiro', label: 'Financeiro', icon: 'finance' },
-  { to: '/configuracoes', label: 'Configuracoes', icon: 'settings' },
+  { to: '/configuracoes', label: 'Configurações', icon: 'settings' },
 ];
 
 const iconMap = {
@@ -34,6 +34,14 @@ const iconMap = {
 };
 
 export const Sidebar = () => {
+  const navigate = useNavigate();
+  const { account, profile, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/login', { replace: true });
+  };
+
   return (
     <aside className="flex w-[236px] flex-col border-r border-white/15 bg-[linear-gradient(160deg,rgba(56,18,93,0.98)_0%,rgba(102,45,170,0.96)_54%,rgba(166,116,255,0.92)_100%)]">
       <div className="border-b border-white/15 px-4 py-3">
@@ -66,14 +74,22 @@ export const Sidebar = () => {
       </nav>
 
       <div className="px-6 py-5">
-        <div className="flex items-end justify-between text-white">
+        <div className="text-white">
           <div>
-            <p className="text-[16px] font-semibold tracking-[0.01em]">{sidebarUser.name}</p>
-            <p className="mt-1 text-sm text-white/72">{sidebarUser.email}</p>
+            <p className="text-[16px] font-semibold tracking-[0.01em]">{account?.name || 'Conta'}</p>
+            <p className="mt-1 text-sm text-white/72">{profile?.username || 'Usuário'}</p>
           </div>
-          <svg viewBox="0 0 20 20" className="mb-1 h-4 w-4 text-white/68" fill="none" stroke="currentColor" strokeWidth="1.8">
-            <path d="m5 8 5 5 5-5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="mt-4 flex items-center gap-2 text-sm font-medium text-white/80 transition hover:text-white"
+          >
+            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.9">
+              <path d="M15 7.5V5.75A1.75 1.75 0 0 0 13.25 4h-5.5A1.75 1.75 0 0 0 6 5.75v12.5C6 19.22 6.78 20 7.75 20h5.5A1.75 1.75 0 0 0 15 18.25V16.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M10 12h10m0 0-3-3m3 3-3 3" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span>Sair</span>
+          </button>
         </div>
       </div>
     </aside>

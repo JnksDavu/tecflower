@@ -34,7 +34,7 @@ export const SalesPage = () => {
 
       <section className="mt-4 grid grid-cols-[1.6fr_1fr] gap-4">
         <div className="space-y-3">
-          <Panel title="Fluxo rapido de venda" className="border-[#f6d6df]">
+          <Panel title="Fluxo rápido de venda" className="border-[#f6d6df]">
             <div className="space-y-3">
               <div className="text-[15px] font-semibold text-brand-bark">Buscar produto</div>
               <Input placeholder="Ex: Buque Primavera, Rosa avulsa, Vaso" />
@@ -82,7 +82,7 @@ export const SalesPage = () => {
 
           <Panel title="Pagamento" className="border-[#d9ead7]">
             <div className="space-y-3 text-[15px] text-[#6b6a64]">
-              {['PIX', 'Cartao de credito', 'Dinheiro'].map((method) => (
+              {['PIX', 'Cartão de crédito', 'Dinheiro'].map((method) => (
                 <label key={method} className="flex items-center gap-3">
                   <input type="radio" name="payment" defaultChecked={method === view.selectedPayment} className="h-4 w-4 accent-brand-bark" />
                   <span>{method}{method === 'PIX' ? ' (aprovado em segundos)' : ''}</span>
