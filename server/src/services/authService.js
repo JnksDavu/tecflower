@@ -1,20 +1,6 @@
 import { getSupabaseAdminClient } from '../lib/supabase.js';
-
-const slugify = (value) =>
-  value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 60);
-
-const createHttpError = (message, status = 400) => {
-  const error = new Error(message);
-  error.status = status;
-  return error;
-};
+import { createHttpError } from '../utils/httpError.js';
+import { slugify } from '../utils/slugify.js';
 
 export const registerAccountOwner = async ({
   accountName,

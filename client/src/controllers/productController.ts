@@ -1,6 +1,12 @@
+import type { ProductFilters, ProductStockAdjustmentPayload, ProductUpsertPayload } from '@/models/types';
 import { productService } from '@/services/productService';
 
 export const productController = {
-  list: () => productService.list(),
-  listCategories: () => productService.listCategories(),
+  list: (filters?: ProductFilters) => productService.list(filters),
+  getMetadata: () => productService.getMetadata(),
+  create: (payload: ProductUpsertPayload) => productService.create(payload),
+  update: (productId: string, payload: ProductUpsertPayload) => productService.update(productId, payload),
+  adjustStock: (productId: string, payload: ProductStockAdjustmentPayload) =>
+    productService.adjustStock(productId, payload),
+  createTag: (name: string) => productService.createTag(name),
 };

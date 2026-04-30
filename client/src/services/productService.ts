@@ -1,17 +1,26 @@
-import { productsMock } from '@/mocks/data';
-import type { Product } from '@/models/types';
+import type {
+  Product,
+  ProductCatalogMetadata,
+  ProductFilters,
+  ProductStockAdjustmentPayload,
+  ProductTag,
+  ProductUpsertPayload,
+} from '@/models/types';
 import { httpClient } from './httpClient';
 
 export const productService = {
-  list: async (): Promise<Product[]> => {
-    if (httpClient.useMocks) {
-      return Promise.resolve(productsMock);
-    }
-
-    return httpClient.get<Product[]>('/products');
+  list: async (filters: ProductFilters = {}): Promise<Product[]> => {
+    return httpClient.get<Product[]>('/products', filters);
   },
-  listCategories: async (): Promise<string[]> => {
-    const products = httpClient.useMocks ? productsMock : await httpClient.get<Product[]>('/products');
-    return ['Todas', ...new Set(products.map((product) => product.category))];
+  getMetadata: async (): Promise<ProductCatalogMetadata> => {
+    return httpClient.get<ProductCatalogMetadata>('/products/metadata');
   },
+  create: async (payload: ProductUpsertPayload): Promise<Product> =>
+    httpClient.post<Product, ProductUpsertPayload>('/products', payload),
+  update: async (productId: string, payload: ProductUpsertPayload): Promise<Product> =>
+    httpClient.patch<Product, ProductUpsertPayload>(`/products/${productId}`, payload),
+  adjustStock: async (productId: string, payload: ProductStockAdjustmentPayload): Promise<Product> =>
+    httpClient.post<Product, ProductStockAdjustmentPayload>(`/products/${productId}/stock-adjustments`, payload),
+  createTag: async (name: string): Promise<ProductTag> =>
+    httpClient.post<ProductTag, { name: string }>('/products/tags', { name }),
 };

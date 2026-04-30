@@ -1,20 +1,73 @@
 export type ProductStatus = 'Em estoque' | 'Estoque baixo' | 'Sem estoque';
 export type FinanceEntryType = 'entrada' | 'saida';
 
+export interface ProductCategory {
+  id: string;
+  name: string;
+  slug: string;
+  sortOrder: number;
+  isFixed: boolean;
+}
+
+export interface ProductTag {
+  id: string;
+  name: string;
+  slug: string;
+  isDefault: boolean;
+}
+
 export interface AppUser {
   name: string;
   email: string;
 }
 
 export interface Product {
-  id: number;
+  id: string;
   name: string;
   sku: string;
   description: string;
-  category: string;
-  stock: number;
+  category: ProductCategory;
+  tags: ProductTag[];
+  stockQuantity: number;
+  minimumStock: number;
   price: number;
   status: ProductStatus;
+  trackStock: boolean;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProductCatalogMetadata {
+  categories: ProductCategory[];
+  tags: ProductTag[];
+  stockStatuses: Array<'Todos' | ProductStatus>;
+}
+
+export interface ProductFilters {
+  [key: string]: string | undefined;
+  search?: string;
+  category?: string;
+  stockStatus?: string;
+  tag?: string;
+}
+
+export interface ProductUpsertPayload {
+  name: string;
+  sku: string;
+  description: string;
+  categorySlug: string;
+  price: number;
+  stockQuantity: number;
+  minimumStock: number;
+  trackStock: boolean;
+  isActive: boolean;
+  tagIds: string[];
+}
+
+export interface ProductStockAdjustmentPayload {
+  quantityDelta: number;
+  note: string;
 }
 
 export interface SaleCartItem {
