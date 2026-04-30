@@ -51,15 +51,15 @@ export const LoginPage = () => {
   };
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#f7f4ed] px-4 py-8">
+    <div className="relative flex h-screen items-center justify-center overflow-hidden bg-[#f7f4ed] px-4 py-4">
       <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(247,244,237,0.98)_0%,rgba(239,231,255,0.92)_100%)]" />
-      <div className="relative grid w-full max-w-7xl min-h-[950px] overflow-hidden rounded-[36px] bg-white shadow-[0_32px_90px_rgba(24,8,43,0.28)] lg:grid-cols-[1.05fr_0.95fr]">
-        <section className="relative hidden min-h-[950px] overflow-hidden bg-[linear-gradient(160deg,rgba(56,18,93,0.98)_0%,rgba(102,45,170,0.96)_54%,rgba(166,116,255,0.92)_100%)] p-12 text-white lg:flex lg:flex-col lg:justify-between">
-          <div className="relative">
+      <div className="relative grid h-[calc(100vh-2rem)] w-full max-w-7xl overflow-hidden rounded-[36px] bg-white shadow-[0_32px_90px_rgba(24,8,43,0.28)] lg:grid-cols-[1.05fr_0.95fr]">
+        <section className="relative hidden h-full overflow-hidden bg-[linear-gradient(160deg,rgba(56,18,93,0.98)_0%,rgba(102,45,170,0.96)_54%,rgba(166,116,255,0.92)_100%)] p-12 text-white lg:flex lg:flex-col lg:justify-center lg:gap-10">
+          <div className="relative w-full max-w-[420px] self-center">
             <img
               src={tecflowerLogo}
               alt="TecFlower"
-              className="h-46 w-auto object-contain brightness-0 invert"
+              className="h-auto w-full object-contain brightness-0 invert"
             />
           </div>
           <div className="relative max-w-md space-y-6">
@@ -73,11 +73,8 @@ export const LoginPage = () => {
               </p>
             </div>
           </div>
-          <div className="relative flex items-center gap-3 text-sm text-white/74">
-
-          </div>
         </section>
-        <section className="flex min-h-[950px] items-center justify-center px-6 py-10 sm:px-10 lg:px-12">
+        <section className="flex h-full items-center justify-center px-6 py-6 sm:px-10 lg:px-12">
           <div className="w-full max-w-md space-y-8">
             <div className="space-y-5 text-center lg:text-left">
               <div className="flex justify-center lg:hidden">
