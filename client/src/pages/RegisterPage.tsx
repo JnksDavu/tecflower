@@ -53,17 +53,17 @@ export const RegisterPage = () => {
   };
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#f7f4ed] px-4 py-8">
+    <div className="relative flex h-screen items-center justify-center overflow-hidden bg-[#f7f4ed] px-4 py-4">
       <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(247,244,237,0.98)_0%,rgba(239,231,255,0.92)_100%)]" />
-      <div className="relative grid w-full max-w-7xl min-h-[950px] overflow-hidden rounded-[36px] bg-white shadow-[0_32px_90px_rgba(24,8,43,0.28)] lg:grid-cols-[1.05fr_0.95fr]">
-        <section className="relative hidden min-h-[950px] overflow-hidden bg-[linear-gradient(160deg,rgba(56,18,93,0.98)_0%,rgba(102,45,170,0.96)_54%,rgba(166,116,255,0.92)_100%)] p-12 lg:flex lg:items-center lg:justify-center">
+      <div className="relative grid h-[calc(100vh-2rem)] w-full max-w-7xl overflow-hidden rounded-[36px] bg-white shadow-[0_32px_90px_rgba(24,8,43,0.28)] lg:grid-cols-[1.05fr_0.95fr]">
+        <section className="relative hidden h-full overflow-hidden bg-[linear-gradient(160deg,rgba(56,18,93,0.98)_0%,rgba(102,45,170,0.96)_54%,rgba(166,116,255,0.92)_100%)] p-12 lg:flex lg:items-center lg:justify-center">
           <img
             src={tecflowerLogo}
             alt="TecFlower"
             className="h-52 w-auto object-contain brightness-0 invert"
           />
         </section>
-        <section className="flex min-h-[950px] items-center justify-center px-6 py-10 sm:px-10 lg:px-12">
+        <section className="flex h-full items-center justify-center px-6 py-8 sm:px-10 lg:px-12">
           <div className="w-full max-w-md space-y-8">
             <div className="space-y-5 text-center lg:text-left">
               <div className="flex justify-center lg:hidden">
@@ -77,9 +77,7 @@ export const RegisterPage = () => {
                   Criar conta
                 </h2>
               </div>
-              <p className="text-sm leading-6 text-[#6c5a88]">
-                Cadastre sua conta e o usuário administrador que vai acessar o sistema.
-              </p>
+              
             </div>
             {errorMessage ? (
               <div className="rounded-2xl border border-[#f3d5df] bg-[#fff7f9] px-4 py-3 text-sm text-[#9a3253]">
@@ -109,9 +107,7 @@ export const RegisterPage = () => {
                   className="h-14 w-full rounded-2xl border border-[#e5ddf4] bg-[#f7f4ff] px-4 text-base text-[#2e124b] outline-none transition focus:border-[#7f54d9] focus:bg-white focus:ring-4 focus:ring-[#b89cff]/25"
                 />
               </label>
-              <p className="rounded-2xl border border-[#efe8fb] bg-[#fcfaff] px-4 py-3 text-sm leading-6 text-[#6c5a88]">
-                O slug da conta será gerado automaticamente a partir do nome informado, em minúsculo e sem caracteres especiais.
-              </p>
+           
               <label className="block space-y-2">
                 <span className="text-sm font-semibold text-[#45216e]">E-mail</span>
                 <input
