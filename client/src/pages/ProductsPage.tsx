@@ -32,6 +32,12 @@ interface StockAdjustmentState {
   note: string;
 }
 
+interface FilterOption {
+  label: string;
+  value: string;
+  keywords?: string;
+}
+
 const emptyMetadata: ProductCatalogMetadata = {
   categories: [],
   tags: [],
@@ -70,18 +76,124 @@ const statusTone: Record<ProductStatus, string> = {
   'Sem estoque': 'text-[#b53a64]',
 };
 
+const LoadingSpinner = ({ className = 'h-5 w-5' }: { className?: string }) => (
+  <span
+    className={`inline-block animate-spin rounded-full border-2 border-[#dbcfc1] border-t-[#7B5CE6] ${className}`}
+  />
+);
+
+const SearchableFilter = ({
+  label,
+  value,
+  options,
+  searchPlaceholder,
+  onSelect,
+}: {
+  label: string;
+  value: string;
+  options: FilterOption[];
+  searchPlaceholder: string;
+  onSelect: (value: string) => void;
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [query, setQuery] = useState('');
+
+  const selectedOption = options.find((option) => option.value === value) || options[0];
+  const filteredOptions = useMemo(() => {
+    const normalized = query.trim().toLowerCase();
+
+    if (!normalized) {
+      return options;
+    }
+
+    return options.filter((option) =>
+      `${option.label} ${option.keywords || ''}`.toLowerCase().includes(normalized),
+    );
+  }, [options, query]);
+
+  return (
+    <div className="relative px-1">
+      <p className="mb-2 pl-1 text-sm font-medium text-brand-bark">{label}</p>
+      <button
+        type="button"
+        onClick={() => setIsOpen((current) => !current)}
+        className="flex h-12 w-full items-center justify-between rounded-[18px] border border-[#ddd6cb] bg-white px-4 text-left text-sm text-brand-bark shadow-[0_10px_24px_rgba(55,43,46,0.06)]"
+      >
+        <span className="truncate">{selectedOption?.label || 'Selecione'}</span>
+        <svg
+          viewBox="0 0 20 20"
+          className={`h-4 w-4 text-[#9d978e] transition ${isOpen ? 'rotate-180' : ''}`}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+        >
+          <path d="m5 8 5 5 5-5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+
+      {isOpen ? (
+        <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-20 rounded-[22px] border border-[#e4ddd2] bg-white p-3 shadow-[0_20px_40px_rgba(55,43,46,0.14)]">
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={searchPlaceholder}
+            className="h-11 w-full rounded-[16px] border border-[#e8e1d6] bg-[#f8f5ef] px-4 text-sm text-brand-bark outline-none transition focus:border-[#7B5CE6] focus:bg-white"
+          />
+          <div className="mt-3 max-h-56 space-y-1 overflow-y-auto">
+            {filteredOptions.length ? (
+              filteredOptions.map((option) => {
+                const isSelected = option.value === value;
+
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => {
+                      onSelect(option.value);
+                      setIsOpen(false);
+                      setQuery('');
+                    }}
+                    className={`flex w-full items-center justify-between rounded-[16px] px-3 py-3 text-left text-sm transition ${
+                      isSelected
+                        ? 'bg-[#f3efff] font-semibold text-[#5f3bc4]'
+                        : 'text-brand-bark hover:bg-[#f8f5ef]'
+                    }`}
+                  >
+                    <span className="truncate">{option.label}</span>
+                    {isSelected ? (
+                      <span className="text-xs font-semibold uppercase tracking-[0.2em]">Ativo</span>
+                    ) : null}
+                  </button>
+                );
+              })
+            ) : (
+              <div className="rounded-[16px] bg-[#faf7f2] px-3 py-4 text-sm text-[#8d8a84]">
+                Nenhuma opção encontrada.
+              </div>
+            )}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+};
+
 export const ProductsPage = () => {
   const [metadata, setMetadata] = useState<ProductCatalogMetadata>(emptyMetadata);
   const [products, setProducts] = useState<Product[]>([]);
+  const [catalogProducts, setCatalogProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [filters, setFilters] = useState({
     search: '',
+    productId: 'all',
     category: 'all',
     stockStatus: 'Todos',
     tag: 'all',
+    minPrice: 0,
+    maxPrice: 0,
   });
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -93,26 +205,75 @@ export const ProductsPage = () => {
     note: '',
   });
 
-  const categoryOptions = useMemo(
-    () => [{ label: 'Todas', value: 'all' }, ...metadata.categories.map((category) => ({ label: category.name, value: category.slug }))],
+  const productPriceBounds = useMemo(() => {
+    if (!catalogProducts.length) {
+      return { min: 0, max: 0 };
+    }
+
+    const prices = catalogProducts.map((product) => product.price);
+    return {
+      min: Math.floor(Math.min(...prices)),
+      max: Math.ceil(Math.max(...prices)),
+    };
+  }, [catalogProducts]);
+
+  const productOptions = useMemo<FilterOption[]>(
+    () => [
+      { label: 'Todos', value: 'all' },
+      ...catalogProducts
+        .slice()
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map((product) => ({
+          label: product.name,
+          value: product.id,
+          keywords: `${product.sku} ${product.category.name} ${product.description}`,
+        })),
+    ],
+    [catalogProducts],
+  );
+
+  const categoryOptions = useMemo<FilterOption[]>(
+    () => [
+      { label: 'Todos', value: 'all' },
+      ...metadata.categories.map((category) => ({ label: category.name, value: category.slug })),
+    ],
     [metadata.categories],
   );
 
-  const tagOptions = useMemo(
-    () => [{ label: 'Todas', value: 'all' }, ...metadata.tags.map((tag) => ({ label: tag.name, value: tag.slug }))],
+  const tagOptions = useMemo<FilterOption[]>(
+    () => [
+      { label: 'Todas', value: 'all' },
+      ...metadata.tags.map((tag) => ({ label: tag.name, value: tag.slug })),
+    ],
     [metadata.tags],
   );
 
-  const stockStatusOptions = useMemo(
+  const stockStatusOptions = useMemo<FilterOption[]>(
     () => metadata.stockStatuses.map((status) => ({ label: status, value: status })),
     [metadata.stockStatuses],
   );
 
+  const displayedProducts = useMemo(
+    () =>
+      products.filter((product) => {
+        if (filters.productId !== 'all' && product.id !== filters.productId) {
+          return false;
+        }
+
+        if (product.price < filters.minPrice || product.price > filters.maxPrice) {
+          return false;
+        }
+
+        return true;
+      }),
+    [filters.maxPrice, filters.minPrice, filters.productId, products],
+  );
+
   const stats = useMemo(() => {
-    const totalItems = products.length;
-    const totalUnits = products.reduce((sum, product) => sum + product.stockQuantity, 0);
-    const lowStock = products.filter((product) => product.status === 'Estoque baixo').length;
-    const noStock = products.filter((product) => product.status === 'Sem estoque').length;
+    const totalItems = displayedProducts.length;
+    const totalUnits = displayedProducts.reduce((sum, product) => sum + product.stockQuantity, 0);
+    const lowStock = displayedProducts.filter((product) => product.status === 'Estoque baixo').length;
+    const noStock = displayedProducts.filter((product) => product.status === 'Sem estoque').length;
 
     return [
       { label: 'Produtos cadastrados', value: totalItems, tone: 'text-brand-bark' },
@@ -120,7 +281,7 @@ export const ProductsPage = () => {
       { label: 'Alertas de estoque baixo', value: lowStock, tone: 'text-[#af7f1d]' },
       { label: 'Sem estoque', value: noStock, tone: 'text-[#b53a64]' },
     ];
-  }, [products]);
+  }, [displayedProducts]);
 
   const loadMetadata = async () => {
     const nextMetadata = await productController.getMetadata();
@@ -136,12 +297,34 @@ export const ProductsPage = () => {
     );
   };
 
+  const loadCatalogProducts = async () => {
+    const allProducts = await productController.list();
+    setCatalogProducts(allProducts);
+
+    const prices = allProducts.map((product) => product.price);
+    const minPrice = prices.length ? Math.floor(Math.min(...prices)) : 0;
+    const maxPrice = prices.length ? Math.ceil(Math.max(...prices)) : 0;
+
+    setFilters((current) => ({
+      ...current,
+      minPrice:
+        current.minPrice === 0 && current.maxPrice === 0 ? minPrice : Math.max(minPrice, current.minPrice),
+      maxPrice:
+        current.minPrice === 0 && current.maxPrice === 0 ? maxPrice : Math.min(maxPrice || current.maxPrice, current.maxPrice || maxPrice),
+    }));
+  };
+
   const loadProducts = async () => {
     setIsLoading(true);
     setErrorMessage('');
 
     try {
-      const nextProducts = await productController.list(filters);
+      const nextProducts = await productController.list({
+        search: filters.search,
+        category: filters.category,
+        stockStatus: filters.stockStatus,
+        tag: filters.tag,
+      });
       setProducts(nextProducts);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Não foi possível carregar os produtos.');
@@ -156,7 +339,7 @@ export const ProductsPage = () => {
       setErrorMessage('');
 
       try {
-        await loadMetadata();
+        await Promise.all([loadMetadata(), loadCatalogProducts()]);
       } catch (error) {
         setErrorMessage(error instanceof Error ? error.message : 'Não foi possível carregar o catálogo.');
       } finally {
@@ -202,12 +385,11 @@ export const ProductsPage = () => {
     });
   };
 
-  const handleFilterChange =
-    (field: 'category' | 'stockStatus' | 'tag') =>
-    (event: ChangeEvent<HTMLSelectElement>) => {
+  const handleFilterSelect =
+    (field: 'productId' | 'category' | 'stockStatus' | 'tag') => (value: string) => {
       setFilters((current) => ({
         ...current,
-        [field]: event.target.value,
+        [field]: value,
       }));
     };
 
@@ -270,7 +452,7 @@ export const ProductsPage = () => {
 
       setShowForm(false);
       setEditingProduct(null);
-      await Promise.all([loadMetadata(), loadProducts()]);
+      await Promise.all([loadMetadata(), loadCatalogProducts(), loadProducts()]);
       setProductForm(createEmptyForm(metadata));
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Não foi possível salvar o produto.');
@@ -317,7 +499,7 @@ export const ProductsPage = () => {
       });
       setSuccessMessage('Estoque ajustado com sucesso.');
       setStockProduct(null);
-      await loadProducts();
+      await Promise.all([loadCatalogProducts(), loadProducts()]);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Não foi possível ajustar o estoque.');
     } finally {
@@ -335,31 +517,63 @@ export const ProductsPage = () => {
 
       <section className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         {stats.map((stat) => (
-          <Panel key={stat.label} className="rounded-[22px] border-none bg-[linear-gradient(180deg,#ffffff_0%,#fbf8f3_100%)] p-5">
-            <p className="text-sm text-[#8d8a84]">{stat.label}</p>
-            <p className={`mt-3 text-[28px] font-bold ${stat.tone}`}>{stat.value}</p>
+          <Panel key={stat.label} className="rounded-[22px] border border-[#e6ded2] bg-white p-5 shadow-[0_14px_32px_rgba(55,43,46,0.06)]">
+            <p className="text-center text-sm text-[#8d8a84]">{stat.label}</p>
+            <div className="mt-3 flex min-h-[36px] items-center justify-center">
+              {isLoading ? <LoadingSpinner className="h-7 w-7" /> : <p className={`text-[28px] font-bold ${stat.tone}`}>{stat.value}</p>}
+            </div>
           </Panel>
         ))}
       </section>
 
-      <section className="mt-6 rounded-[24px] border border-[#ebe6de] bg-white p-4">
-        <div className="grid gap-4 xl:grid-cols-[minmax(0,1.5fr)_repeat(3,minmax(0,0.6fr))]">
-          <div className="flex items-center gap-3 rounded-full border border-[#ebe6de] bg-[#faf8f3] px-4">
-            <svg viewBox="0 0 20 20" className="h-4 w-4 text-[#8f8d87]" fill="none" stroke="currentColor" strokeWidth="1.8">
-              <path d="m14 14 4 4M8.5 15A6.5 6.5 0 1 1 15 8.5 6.5 6.5 0 0 1 8.5 15Z" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            <input
-              value={filters.search}
-              onChange={handleSearchChange}
-              className="h-12 w-full border-none bg-transparent text-[15px] text-brand-bark outline-none placeholder:text-[#8f8d87]"
-              placeholder="Buscar por nome, categoria, descrição ou SKU"
-            />
+      <section className="mt-6 rounded-[28px] border border-[#e6ded2] bg-white p-5 shadow-[0_18px_42px_rgba(55,43,46,0.07)]">
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1.25fr)_repeat(4,minmax(0,0.78fr))]">
+          <div>
+            <p className="mb-2 text-sm font-medium text-brand-bark">Busca geral</p>
+            <div className="flex items-center gap-3 rounded-[18px] border border-[#ddd6cb] bg-white px-4 shadow-[0_10px_24px_rgba(55,43,46,0.06)]">
+              <svg viewBox="0 0 20 20" className="h-4 w-4 text-[#8f8d87]" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <path d="m14 14 4 4M8.5 15A6.5 6.5 0 1 1 15 8.5 6.5 6.5 0 0 1 8.5 15Z" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <input
+                value={filters.search}
+                onChange={handleSearchChange}
+                className="h-12 w-full border-none bg-transparent text-[15px] text-brand-bark outline-none placeholder:text-[#8f8d87]"
+                placeholder="Buscar por nome, categoria, descrição ou SKU"
+              />
+            </div>
           </div>
 
-          <SelectField label="Categoria" value={filters.category} options={categoryOptions} onChange={handleFilterChange('category')} />
-          <SelectField label="Status de estoque" value={filters.stockStatus} options={stockStatusOptions} onChange={handleFilterChange('stockStatus')} />
-          <SelectField label="Tag" value={filters.tag} options={tagOptions} onChange={handleFilterChange('tag')} />
+          <SearchableFilter
+            label="Produto"
+            value={filters.productId}
+            options={productOptions}
+            searchPlaceholder="Pesquisar produto, SKU ou categoria"
+            onSelect={handleFilterSelect('productId')}
+          />
+          <SearchableFilter
+            label="Categoria"
+            value={filters.category}
+            options={categoryOptions}
+            searchPlaceholder="Pesquisar categoria"
+            onSelect={handleFilterSelect('category')}
+          />
+          <SearchableFilter
+            label="Status"
+            value={filters.stockStatus}
+            options={stockStatusOptions}
+            searchPlaceholder="Pesquisar status"
+            onSelect={handleFilterSelect('stockStatus')}
+          />
+          <SearchableFilter
+            label="Tag"
+            value={filters.tag}
+            options={tagOptions}
+            searchPlaceholder="Pesquisar tag"
+            onSelect={handleFilterSelect('tag')}
+          />
         </div>
+
+        
       </section>
 
       {errorMessage ? (
@@ -375,11 +589,18 @@ export const ProductsPage = () => {
       ) : null}
 
       <section className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.7fr)_minmax(340px,0.9fr)]">
-        <div className="space-y-4">
+        <div className="grid gap-4 md:grid-cols-2">
           {isLoading ? (
-            <Panel title="Carregando produtos" description="Buscando catálogo e estoque da sua conta." />
-          ) : products.length ? (
-            products.map((product) => (
+            Array.from({ length: 4 }).map((_, index) => (
+              <Panel key={index} className="flex min-h-[278px] items-center justify-center rounded-[24px] border border-[#e7e0d5] bg-white shadow-[0_18px_38px_rgba(55,43,46,0.08)]">
+                <div className="flex flex-col items-center gap-3 text-[#8d8a84]">
+                  <LoadingSpinner className="h-9 w-9" />
+                  <p className="text-sm">Buscando produtos...</p>
+                </div>
+              </Panel>
+            ))
+          ) : displayedProducts.length ? (
+            displayedProducts.map((product) => (
               <ProductCard
                 key={product.id}
                 product={product}
