@@ -96,4 +96,29 @@ export const productController = {
       next(error);
     }
   },
+
+  createCategory: async (req, res, next) => {
+    try {
+      const category = await productService.createCategory({
+        accountId: req.auth.accountId,
+        payload: req.body,
+      });
+
+      sendSuccess(res, category, 'Categoria criada com sucesso.');
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  listStockMovements: async (req, res, next) => {
+    try {
+      const movements = await productService.listStockMovements({
+        accountId: req.auth.accountId,
+      });
+
+      sendSuccess(res, movements, 'Movimentações carregadas.');
+    } catch (error) {
+      next(error);
+    }
+  },
 };

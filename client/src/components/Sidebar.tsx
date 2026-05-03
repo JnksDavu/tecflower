@@ -1,10 +1,21 @@
-import { NavLink, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import tecflowerLogo from '@/assets/tecflowerLogo.png';
 import { useAuth } from '@/contexts/AuthContext';
 
 const items = [
   { to: '/vendas', label: 'Vendas', icon: 'sales' },
-  { to: '/produtos', label: 'Produtos', icon: 'products' },
+  {
+    to: '/produtos/catalogo',
+    label: 'Produtos',
+    icon: 'products',
+    children: [
+      { to: '/produtos/catalogo', label: 'Catálogo' },
+      { to: '/produtos/categorias', label: 'Categorias' },
+      { to: '/produtos/tags', label: 'Tags' },
+    ],
+  },
+  { to: '/estoque', label: 'Estoque', icon: 'inventory' },
   { to: '/financeiro', label: 'Financeiro', icon: 'finance' },
   { to: '/configuracoes', label: 'Configurações', icon: 'settings' },
 ];
@@ -18,6 +29,11 @@ const iconMap = {
   products: (
     <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.9">
       <path d="M6 5h12v14H6zM9 9h6M9 13h4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+  inventory: (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.9">
+      <path d="M4 7.5h16v11H4zM8 7.5V5h8v2.5M8 12h8M8 15h5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   ),
   finance: (
@@ -35,7 +51,11 @@ const iconMap = {
 
 export const Sidebar = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { account, profile, signOut } = useAuth();
+  const [expandedGroup, setExpandedGroup] = useState<string | null>(
+    location.pathname.startsWith('/produtos') ? '/produtos/catalogo' : null,
+  );
 
   const handleSignOut = async () => {
     await signOut();
@@ -57,18 +77,65 @@ export const Sidebar = () => {
       <nav className="flex-1 px-3 py-8">
         <div className="space-y-1.5">
           {items.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) =>
-                `flex h-11 items-center gap-3 rounded-full px-5 text-[18px] font-semibold tracking-[0.01em] transition ${
-                  isActive ? 'bg-white/10 text-white backdrop-blur-sm' : 'text-white hover:bg-white/10 hover:text-white'
-                }`
-              }
-            >
-              <span className="text-current">{iconMap[item.icon as keyof typeof iconMap]}</span>
-              <span>{item.label}</span>
-            </NavLink>
+            item.children ? (
+              <div
+                key={item.to}
+                onMouseEnter={() => setExpandedGroup(item.to)}
+                onMouseLeave={() => {
+                  if (!location.pathname.startsWith('/produtos')) {
+                    setExpandedGroup(null);
+                  }
+                }}
+                className="space-y-1"
+              >
+                <button
+                  type="button"
+                  onClick={() => setExpandedGroup((current) => (current === item.to ? null : item.to))}
+                  className={`flex h-11 w-full items-center gap-3 rounded-full px-5 text-left text-[18px] font-semibold tracking-[0.01em] transition ${
+                    location.pathname.startsWith('/produtos') || expandedGroup === item.to
+                      ? 'bg-white/10 text-white backdrop-blur-sm'
+                      : 'text-white hover:bg-white/10 hover:text-white'
+                  }`}
+                >
+                  <span className="text-current">{iconMap[item.icon as keyof typeof iconMap]}</span>
+                  <span className="flex-1">{item.label}</span>
+                  <svg viewBox="0 0 20 20" className={`h-4 w-4 transition ${expandedGroup === item.to || location.pathname.startsWith('/produtos') ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="1.8">
+                    <path d="m5 8 5 5 5-5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+
+                {expandedGroup === item.to || location.pathname.startsWith('/produtos') ? (
+                  <div className="space-y-1 pl-6">
+                    {item.children.map((child) => (
+                      <NavLink
+                        key={child.to}
+                        to={child.to}
+                        className={({ isActive }) =>
+                          `flex h-10 items-center rounded-full px-5 text-[15px] font-medium transition ${
+                            isActive ? 'bg-white/14 text-white' : 'text-white/80 hover:bg-white/10 hover:text-white'
+                          }`
+                        }
+                      >
+                        {child.label}
+                      </NavLink>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            ) : (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={({ isActive }) =>
+                  `flex h-11 items-center gap-3 rounded-full px-5 text-[18px] font-semibold tracking-[0.01em] transition ${
+                    isActive ? 'bg-white/10 text-white backdrop-blur-sm' : 'text-white hover:bg-white/10 hover:text-white'
+                  }`
+                }
+              >
+                <span className="text-current">{iconMap[item.icon as keyof typeof iconMap]}</span>
+                <span>{item.label}</span>
+              </NavLink>
+            )
           ))}
         </div>
       </nav>

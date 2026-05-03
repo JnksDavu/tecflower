@@ -70,6 +70,25 @@ export interface ProductStockAdjustmentPayload {
   note: string;
 }
 
+export interface ProductCategoryCreatePayload {
+  name: string;
+}
+
+export interface ProductStockMovement {
+  id: string;
+  movementType: 'manual_adjustment' | 'restock' | 'sale' | 'loss';
+  quantityDelta: number;
+  previousQuantity: number;
+  nextQuantity: number;
+  note: string;
+  createdAt: string;
+  product: {
+    id: string;
+    name: string;
+    sku: string;
+  };
+}
+
 export interface SaleCartItem {
   id: number;
   name: string;

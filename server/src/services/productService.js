@@ -301,6 +301,22 @@ const loadMetadata = async (supabase, accountId) => {
   };
 };
 
+const getNextCategorySortOrder = async (supabase, accountId) => {
+  const { data, error } = await supabase
+    .from('product_categories')
+    .select('sort_order')
+    .eq('account_id', accountId)
+    .order('sort_order', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    throw createHttpError(error.message, 400);
+  }
+
+  return Number(data?.sort_order ?? 0) + 1;
+};
+
 export const productService = {
   list: async ({ accountId, filters = {} }) => {
     const supabase = getSupabaseAdminClient();
@@ -609,5 +625,92 @@ export const productService = {
       slug: data.slug,
       isDefault: Boolean(data.is_default),
     };
+  },
+
+  createCategory: async ({ accountId, payload }) => {
+    const supabase = getSupabaseAdminClient();
+    await ensureCatalogSetup(supabase, accountId);
+
+    const name = normalizeText(payload.name);
+
+    if (!name) {
+      throw createHttpError('Informe o nome da categoria.', 400);
+    }
+
+    const slug = slugify(name);
+
+    if (!slug) {
+      throw createHttpError('Informe um nome de categoria válido.', 400);
+    }
+
+    const sortOrder = await getNextCategorySortOrder(supabase, accountId);
+
+    const { data, error } = await supabase
+      .from('product_categories')
+      .insert({
+        account_id: accountId,
+        name,
+        slug,
+        sort_order: sortOrder,
+        is_fixed: false,
+      })
+      .select('id, name, slug, sort_order, is_fixed')
+      .single();
+
+    if (error || !data) {
+      throw createHttpError(error?.message || 'Não foi possível criar a categoria.', 400);
+    }
+
+    return {
+      id: data.id,
+      name: data.name,
+      slug: data.slug,
+      sortOrder: Number(data.sort_order ?? 0),
+      isFixed: Boolean(data.is_fixed),
+    };
+  },
+
+  listStockMovements: async ({ accountId }) => {
+    const supabase = getSupabaseAdminClient();
+    await ensureCatalogSetup(supabase, accountId);
+
+    const { data, error } = await supabase
+      .from('stock_movements')
+      .select(`
+        id,
+        movement_type,
+        quantity_delta,
+        previous_quantity,
+        next_quantity,
+        note,
+        created_at,
+        products (
+          id,
+          name,
+          sku
+        )
+      `)
+      .eq('account_id', accountId)
+      .order('created_at', { ascending: false })
+      .limit(100);
+
+    if (error) {
+      throw createHttpError(error.message, 400);
+    }
+
+    return (data || []).map((movement) => ({
+      id: movement.id,
+      movementType: movement.movement_type,
+      quantityDelta: Number(movement.quantity_delta ?? 0),
+      previousQuantity: Number(movement.previous_quantity ?? 0),
+      nextQuantity: Number(movement.next_quantity ?? 0),
+      note: movement.note || '',
+      createdAt: movement.created_at,
+      product: {
+        id: movement.products?.id || '',
+        name: movement.products?.name || '',
+        sku: movement.products?.sku || '',
+      },
+    }));
   },
 };

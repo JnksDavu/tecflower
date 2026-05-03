@@ -1,7 +1,10 @@
 import type {
   Product,
+  ProductCategory,
+  ProductCategoryCreatePayload,
   ProductCatalogMetadata,
   ProductFilters,
+  ProductStockMovement,
   ProductStockAdjustmentPayload,
   ProductTag,
   ProductUpsertPayload,
@@ -21,6 +24,10 @@ export const productService = {
     httpClient.patch<Product, ProductUpsertPayload>(`/products/${productId}`, payload),
   adjustStock: async (productId: string, payload: ProductStockAdjustmentPayload): Promise<Product> =>
     httpClient.post<Product, ProductStockAdjustmentPayload>(`/products/${productId}/stock-adjustments`, payload),
+  createCategory: async (payload: ProductCategoryCreatePayload): Promise<ProductCategory> =>
+    httpClient.post<ProductCategory, ProductCategoryCreatePayload>('/products/categories', payload),
   createTag: async (name: string): Promise<ProductTag> =>
     httpClient.post<ProductTag, { name: string }>('/products/tags', { name }),
+  listStockMovements: async (): Promise<ProductStockMovement[]> =>
+    httpClient.get<ProductStockMovement[]>('/products/stock-movements'),
 };
