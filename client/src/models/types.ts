@@ -94,27 +94,53 @@ export interface ProductStockMovement {
 }
 
 export interface SaleCartItem {
-  id: number;
-  name: string;
+  productId: string;
   quantity: number;
 }
 
 export interface PopularProduct {
-  id: number;
+  id: string;
   name: string;
   price: number;
 }
 
+export interface SalesCatalogProduct {
+  id: string;
+  name: string;
+  categoryName: string;
+  price: number;
+  stockQuantity: number;
+  status: ProductStatus;
+}
+
+export interface SalesCustomer {
+  id: string;
+  name: string;
+  phone: string;
+  cpf?: string;
+  lastOrderLabel?: string;
+}
+
+export interface SalesPaymentMethodOption {
+  id: 'PIX' | 'Cartão de crédito' | 'Cartão de débito' | 'Dinheiro';
+  label: string;
+  helper?: string;
+}
+
 export interface SalesView {
   cartItems: SaleCartItem[];
+  catalogProducts: SalesCatalogProduct[];
   popularProducts: PopularProduct[];
-  total: number;
+  customerSuggestions: SalesCustomer[];
+  paymentMethods: SalesPaymentMethodOption[];
   customerName: string;
+  customerPhone: string;
   customerCpf: string;
-  selectedPayment: 'PIX' | 'Cartão de crédito' | 'Dinheiro';
+  customerNotes: string;
+  selectedPayment?: '' | 'PIX' | 'Cartão de crédito' | 'Cartão de débito' | 'Dinheiro';
   paidAmount: number;
-  statusTitle: string;
-  statusMessage: string;
+  discountAmount: number;
+  quickNotes: string[];
 }
 
 export interface FinanceSummaryCard {

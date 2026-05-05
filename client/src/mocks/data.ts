@@ -95,23 +95,46 @@ export const productsMock: Product[] = [
 
 export const salesViewMock: SalesView = {
   cartItems: [
-    { id: 1, name: 'Buque Rosas', quantity: 2 },
-    { id: 2, name: 'Vaso Cerâmica', quantity: 1 },
-    { id: 3, name: 'Cartão personalizado', quantity: 1 },
+    { productId: '1', quantity: 1 },
+    { productId: '3', quantity: 2 },
   ],
+  catalogProducts: productsMock.map((product) => ({
+    id: product.id,
+    name: product.name,
+    categoryName: product.category.name,
+    price: product.price,
+    stockQuantity: product.stockQuantity,
+    status: product.status,
+  })),
   popularProducts: [
-    { id: 1, name: 'Buque Rosas', price: 89 },
-    { id: 2, name: 'Orquídea', price: 65 },
-    { id: 3, name: 'Girassol', price: 24 },
-    { id: 4, name: 'Cesta Presente', price: 120 },
+    { id: '1', name: 'Buque Primavera', price: 89.9 },
+    { id: '2', name: 'Orquídea Phalaenopsis', price: 129 },
+    { id: '3', name: 'Girassol Premium', price: 39.9 },
+    { id: '4', name: 'Arranjo Rosas Vermelhas', price: 149.9 },
   ],
-  total: 318,
+  customerSuggestions: [
+    { id: 'c1', name: 'Maria Oliveira', phone: '(11) 99888-2211', cpf: '123.456.789-00', lastOrderLabel: 'Comprou ontem' },
+    { id: 'c2', name: 'João Ferreira', phone: '(11) 97777-1020', lastOrderLabel: 'Cliente frequente' },
+    { id: 'c3', name: 'Ana Costa', phone: '(11) 96666-4321', lastOrderLabel: 'Última compra há 12 dias' },
+  ],
+  paymentMethods: [
+    { id: 'PIX', label: 'PIX', helper: 'Confirmação rápida e envio imediato do comprovante.' },
+    { id: 'Cartão de crédito', label: 'Cartão de crédito' },
+    { id: 'Cartão de débito', label: 'Cartão de débito' },
+    { id: 'Dinheiro', label: 'Dinheiro', helper: 'Permite cálculo de troco na hora.' },
+  ],
   customerName: '',
+  customerPhone: '',
   customerCpf: '',
-  selectedPayment: 'PIX',
-  paidAmount: 350,
-  statusTitle: 'Venda concluída com sucesso',
-  statusMessage: 'Comprovante enviado no WhatsApp. Estoque atualizado imediatamente.',
+  customerNotes: '',
+  selectedPayment: '',
+  paidAmount: 0,
+  discountAmount: 0,
+  quickNotes: [
+    'Cliente novo: cadastro em menos de 10 segundos com nome e telefone.',
+    'Desconto aplicado antes do pagamento para evitar retrabalho no caixa.',
+    'Resumo lateral sempre visível para fechamento rápido.',
+  ],
 };
 
 export const financeSummaryMock: FinanceSummaryCard[] = [
