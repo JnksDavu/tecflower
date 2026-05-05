@@ -78,4 +78,12 @@ export const httpClient = {
 
     return parseResponse<TResponse>(response);
   },
+  delete: async <TResponse>(endpoint: string): Promise<TResponse> => {
+    const response = await fetch(buildUrl(endpoint), {
+      method: 'DELETE',
+      headers: await getHeaders(),
+    });
+
+    return parseResponse<TResponse>(response);
+  },
 };

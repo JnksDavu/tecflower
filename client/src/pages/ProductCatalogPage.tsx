@@ -268,6 +268,23 @@ export const ProductCatalogPage = () => {
     }
   };
 
+  const handleDeleteProduct = async (product: Product) => {
+    if (!window.confirm(`Excluir o produto "${product.name}"?`)) {
+      return;
+    }
+
+    setErrorMessage('');
+    setSuccessMessage('');
+
+    try {
+      await productController.remove(product.id);
+      setSuccessMessage('Produto excluído com sucesso.');
+      await Promise.all([loadMetadata(), loadCatalogProducts(), loadProducts()]);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Não foi possível excluir o produto.');
+    }
+  };
+
   const handleAdjustStock = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -345,7 +362,13 @@ export const ProductCatalogPage = () => {
 
       <section className="mt-6">
         {filteredProducts.length || isLoading ? (
-          <CatalogProductGrid isLoading={isLoading} products={filteredProducts} onEdit={openEditModal} onAdjustStock={openStockModal} />
+          <CatalogProductGrid
+            isLoading={isLoading}
+            products={filteredProducts}
+            onEdit={openEditModal}
+            onAdjustStock={openStockModal}
+            onDelete={handleDeleteProduct}
+          />
         ) : (
           <Panel title="Nenhum produto encontrado" description="Ajuste os filtros ou crie um novo produto." action={<Button size="sm" onClick={openCreateModal}>Cadastrar produto</Button>} />
         )}

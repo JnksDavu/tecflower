@@ -447,11 +447,13 @@ export const CatalogProductGrid = ({
   products,
   onEdit,
   onAdjustStock,
+  onDelete,
 }: {
   isLoading: boolean;
   products: Product[];
   onEdit: (product: Product) => void;
   onAdjustStock: (product: Product) => void;
+  onDelete: (product: Product) => void;
 }) => (
   <div className="grid gap-4 md:grid-cols-2">
     {isLoading ? (
@@ -470,6 +472,7 @@ export const CatalogProductGrid = ({
           product={product}
           onEdit={onEdit}
           onAdjustStock={onAdjustStock}
+          onDelete={onDelete}
         />
       ))
     )}

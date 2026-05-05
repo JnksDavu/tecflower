@@ -317,6 +317,36 @@ const getNextCategorySortOrder = async (supabase, accountId) => {
   return Number(data?.sort_order ?? 0) + 1;
 };
 
+const loadCategoryById = async (supabase, accountId, categoryId) => {
+  const { data, error } = await supabase
+    .from('product_categories')
+    .select('id, name, slug, sort_order, is_fixed')
+    .eq('account_id', accountId)
+    .eq('id', categoryId)
+    .single();
+
+  if (error || !data) {
+    throw createHttpError('Categoria não encontrada.', 404);
+  }
+
+  return data;
+};
+
+const loadTagById = async (supabase, accountId, tagId) => {
+  const { data, error } = await supabase
+    .from('product_tags')
+    .select('id, name, slug, is_default')
+    .eq('account_id', accountId)
+    .eq('id', tagId)
+    .single();
+
+  if (error || !data) {
+    throw createHttpError('Tag não encontrada.', 404);
+  }
+
+  return data;
+};
+
 export const productService = {
   list: async ({ accountId, filters = {} }) => {
     const supabase = getSupabaseAdminClient();
@@ -527,6 +557,39 @@ export const productService = {
     return mapProduct(row);
   },
 
+  remove: async ({ accountId, productId }) => {
+    const supabase = getSupabaseAdminClient();
+    await ensureCatalogSetup(supabase, accountId);
+
+    const { data: current, error: currentError } = await supabase
+      .from('products')
+      .select('id, stock_quantity')
+      .eq('account_id', accountId)
+      .eq('id', productId)
+      .single();
+
+    if (currentError || !current) {
+      throw createHttpError('Produto não encontrado.', 404);
+    }
+
+    if (Number(current.stock_quantity ?? 0) > 0) {
+      throw createHttpError('Só é possível excluir produto com estoque zerado.', 400);
+    }
+
+    // TODO: bloquear exclusão quando houver vendas/compras vinculadas após a implementação do módulo de vendas.
+    const { error: deleteError } = await supabase
+      .from('products')
+      .delete()
+      .eq('account_id', accountId)
+      .eq('id', productId);
+
+    if (deleteError) {
+      throw createHttpError(deleteError.message, 400);
+    }
+
+    return { id: productId };
+  },
+
   adjustStock: async ({ accountId, userId, productId, payload }) => {
     const supabase = getSupabaseAdminClient();
     await ensureCatalogSetup(supabase, accountId);
@@ -627,6 +690,81 @@ export const productService = {
     };
   },
 
+  updateTag: async ({ accountId, tagId, payload }) => {
+    const supabase = getSupabaseAdminClient();
+    await ensureCatalogSetup(supabase, accountId);
+    const currentTag = await loadTagById(supabase, accountId, tagId);
+    const name = normalizeText(payload.name);
+
+    if (!name) {
+      throw createHttpError('Informe o nome da tag.', 400);
+    }
+
+    const slug = slugify(name);
+
+    if (!slug) {
+      throw createHttpError('Informe um nome de tag válido.', 400);
+    }
+
+    const { data, error } = await supabase
+      .from('product_tags')
+      .update({
+        name,
+        slug,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('account_id', accountId)
+      .eq('id', tagId)
+      .select('id, name, slug, is_default')
+      .single();
+
+    if (error || !data) {
+      throw createHttpError(error?.message || 'Não foi possível atualizar a tag.', 400);
+    }
+
+    return {
+      id: data.id,
+      name: data.name,
+      slug: data.slug,
+      isDefault: Boolean(currentTag.is_default),
+    };
+  },
+
+  removeTag: async ({ accountId, tagId }) => {
+    const supabase = getSupabaseAdminClient();
+    await ensureCatalogSetup(supabase, accountId);
+    const currentTag = await loadTagById(supabase, accountId, tagId);
+
+    if (currentTag.is_default) {
+      throw createHttpError('Tags padrão do sistema não podem ser excluídas.', 400);
+    }
+
+    const { count, error: countError } = await supabase
+      .from('product_tag_links')
+      .select('product_id', { count: 'exact', head: true })
+      .eq('tag_id', tagId);
+
+    if (countError) {
+      throw createHttpError(countError.message, 400);
+    }
+
+    if ((count ?? 0) > 0) {
+      throw createHttpError('Remova os produtos vinculados antes de excluir esta tag.', 400);
+    }
+
+    const { error: deleteError } = await supabase
+      .from('product_tags')
+      .delete()
+      .eq('account_id', accountId)
+      .eq('id', tagId);
+
+    if (deleteError) {
+      throw createHttpError(deleteError.message, 400);
+    }
+
+    return { id: tagId };
+  },
+
   createCategory: async ({ accountId, payload }) => {
     const supabase = getSupabaseAdminClient();
     await ensureCatalogSetup(supabase, accountId);
@@ -668,6 +806,83 @@ export const productService = {
       sortOrder: Number(data.sort_order ?? 0),
       isFixed: Boolean(data.is_fixed),
     };
+  },
+
+  updateCategory: async ({ accountId, categoryId, payload }) => {
+    const supabase = getSupabaseAdminClient();
+    await ensureCatalogSetup(supabase, accountId);
+    const currentCategory = await loadCategoryById(supabase, accountId, categoryId);
+    const name = normalizeText(payload.name);
+
+    if (!name) {
+      throw createHttpError('Informe o nome da categoria.', 400);
+    }
+
+    const slug = slugify(name);
+
+    if (!slug) {
+      throw createHttpError('Informe um nome de categoria válido.', 400);
+    }
+
+    const { data, error } = await supabase
+      .from('product_categories')
+      .update({
+        name,
+        slug,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('account_id', accountId)
+      .eq('id', categoryId)
+      .select('id, name, slug, sort_order, is_fixed')
+      .single();
+
+    if (error || !data) {
+      throw createHttpError(error?.message || 'Não foi possível atualizar a categoria.', 400);
+    }
+
+    return {
+      id: data.id,
+      name: data.name,
+      slug: data.slug,
+      sortOrder: Number(data.sort_order ?? 0),
+      isFixed: Boolean(currentCategory.is_fixed),
+    };
+  },
+
+  removeCategory: async ({ accountId, categoryId }) => {
+    const supabase = getSupabaseAdminClient();
+    await ensureCatalogSetup(supabase, accountId);
+    const currentCategory = await loadCategoryById(supabase, accountId, categoryId);
+
+    if (currentCategory.is_fixed) {
+      throw createHttpError('Categorias base do sistema não podem ser excluídas.', 400);
+    }
+
+    const { count, error: countError } = await supabase
+      .from('products')
+      .select('id', { count: 'exact', head: true })
+      .eq('account_id', accountId)
+      .eq('category_id', categoryId);
+
+    if (countError) {
+      throw createHttpError(countError.message, 400);
+    }
+
+    if ((count ?? 0) > 0) {
+      throw createHttpError('Remova os produtos vinculados antes de excluir esta categoria.', 400);
+    }
+
+    const { error: deleteError } = await supabase
+      .from('product_categories')
+      .delete()
+      .eq('account_id', accountId)
+      .eq('id', categoryId);
+
+    if (deleteError) {
+      throw createHttpError(deleteError.message, 400);
+    }
+
+    return { id: categoryId };
   },
 
   listStockMovements: async ({ accountId }) => {

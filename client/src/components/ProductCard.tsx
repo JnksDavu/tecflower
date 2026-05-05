@@ -7,9 +7,10 @@ interface ProductCardProps {
   product: Product;
   onEdit: (product: Product) => void;
   onAdjustStock: (product: Product) => void;
+  onDelete: (product: Product) => void;
 }
 
-export const ProductCard = ({ product, onEdit, onAdjustStock }: ProductCardProps) => {
+export const ProductCard = ({ product, onEdit, onAdjustStock, onDelete }: ProductCardProps) => {
   const hasStock = product.stockQuantity > 0;
 
   return (
@@ -54,6 +55,27 @@ export const ProductCard = ({ product, onEdit, onAdjustStock }: ProductCardProps
         </div>
 
         <div className="min-w-[112px] text-right">
+          <div className="mb-3 flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => onEdit(product)}
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-[#ded8cf] text-[#7e756c] transition hover:bg-[#faf7f2]"
+            >
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.9">
+                <path d="m4 20 4.2-1 9.1-9.1a2.2 2.2 0 0 0-3.1-3.1L5.1 15.9 4 20Z" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="m13 6 5 5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              onClick={() => onDelete(product)}
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-[#f0d7df] text-[#b45072] transition hover:bg-[#fff5f8]"
+            >
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.9">
+                <path d="M5 7h14M9 7V5.8c0-.44.36-.8.8-.8h4.4c.44 0 .8.36.8.8V7m-8 0 1 11c.04.55.5 1 1.06 1h5.88c.56 0 1.02-.45 1.06-1l1-11M10 11v5M14 11v5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          </div>
           <p className={`text-[24px] font-bold ${hasStock ? 'text-[#8e4d8c]' : 'text-[#c94f7a]'}`}>
             {formatCurrency(product.price)}
           </p>
@@ -68,9 +90,7 @@ export const ProductCard = ({ product, onEdit, onAdjustStock }: ProductCardProps
         <Button variant="secondary" className="min-w-[184px] flex-1" onClick={() => onAdjustStock(product)}>
           Ajustar estoque
         </Button>
-        <Button variant="outline" className="min-w-[184px] flex-1" onClick={() => onEdit(product)}>
-          Editar produto
-        </Button>
+        
       </div>
     </article>
   );

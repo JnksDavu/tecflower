@@ -84,6 +84,19 @@ export const productController = {
     }
   },
 
+  remove: async (req, res, next) => {
+    try {
+      const result = await productService.remove({
+        accountId: req.auth.accountId,
+        productId: req.params.id,
+      });
+
+      sendSuccess(res, result, 'Produto excluído com sucesso.');
+    } catch (error) {
+      next(error);
+    }
+  },
+
   createTag: async (req, res, next) => {
     try {
       const tag = await productService.createTag({
@@ -97,6 +110,33 @@ export const productController = {
     }
   },
 
+  updateTag: async (req, res, next) => {
+    try {
+      const tag = await productService.updateTag({
+        accountId: req.auth.accountId,
+        tagId: req.params.id,
+        payload: req.body,
+      });
+
+      sendSuccess(res, tag, 'Tag atualizada com sucesso.');
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  removeTag: async (req, res, next) => {
+    try {
+      const result = await productService.removeTag({
+        accountId: req.auth.accountId,
+        tagId: req.params.id,
+      });
+
+      sendSuccess(res, result, 'Tag excluída com sucesso.');
+    } catch (error) {
+      next(error);
+    }
+  },
+
   createCategory: async (req, res, next) => {
     try {
       const category = await productService.createCategory({
@@ -105,6 +145,33 @@ export const productController = {
       });
 
       sendSuccess(res, category, 'Categoria criada com sucesso.');
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  updateCategory: async (req, res, next) => {
+    try {
+      const category = await productService.updateCategory({
+        accountId: req.auth.accountId,
+        categoryId: req.params.id,
+        payload: req.body,
+      });
+
+      sendSuccess(res, category, 'Categoria atualizada com sucesso.');
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  removeCategory: async (req, res, next) => {
+    try {
+      const result = await productService.removeCategory({
+        accountId: req.auth.accountId,
+        categoryId: req.params.id,
+      });
+
+      sendSuccess(res, result, 'Categoria excluída com sucesso.');
     } catch (error) {
       next(error);
     }

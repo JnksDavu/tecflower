@@ -74,6 +74,10 @@ export interface ProductCategoryCreatePayload {
   name: string;
 }
 
+export interface ProductTagUpsertPayload {
+  name: string;
+}
+
 export interface ProductStockMovement {
   id: string;
   movementType: 'manual_adjustment' | 'restock' | 'sale' | 'loss';
