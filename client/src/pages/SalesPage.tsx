@@ -555,6 +555,18 @@ export const SalesPage = () => {
                     </div>
                   )}
                 </div>
+
+                <button
+                  type="button"
+                  onClick={handlePrimaryAction}
+                  className={`w-full rounded-[18px] px-5 py-4 text-base font-bold transition ${
+                    productStepComplete
+                      ? 'bg-[#4a9a4c] text-white hover:bg-[#418a43]'
+                      : 'bg-[#ece7dc] text-[#8d8a84]'
+                  }`}
+                >
+                  Ir para cliente
+                </button>
               </div>
             </Panel>
           ) : null}
@@ -657,6 +669,18 @@ export const SalesPage = () => {
                     onChange={(event) => setCustomerNotes(event.target.value)}
                   />
                 </label>
+
+                <button
+                  type="button"
+                  onClick={handlePrimaryAction}
+                  className={`w-full rounded-[18px] px-5 py-4 text-base font-bold transition ${
+                    customerStepComplete
+                      ? 'bg-[#4a9a4c] text-white hover:bg-[#418a43]'
+                      : 'bg-[#ece7dc] text-[#8d8a84]'
+                  }`}
+                >
+                  Ir para pagamento
+                </button>
               </div>
             </Panel>
           ) : null}
@@ -679,13 +703,24 @@ export const SalesPage = () => {
                   </div>
                 </div>
 
+                {selectedPayment === 'Dinheiro' ? (
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <div className="flex flex-col gap-2 text-sm font-medium text-brand-bark">
+                      <span>Troco</span>
+                      <div className="flex h-12 items-center rounded-full border border-[#d7d7d1] bg-[#f4f4f1] px-4 text-sm font-semibold text-brand-bark">
+                        {formatCurrency(changeAmount)}
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+
                 <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                   {view.paymentMethods.map((method) => (
                     <button
                       key={method.id}
                       type="button"
                       onClick={() => setSelectedPayment(method.id)}
-                      className={`rounded-[18px] border px-4 py-4 text-left transition ${
+                      className={`rounded-[18px] border px-4 py-4 text-center transition ${
                         selectedPayment === method.id ? 'border-[#7B5CE6] bg-[#f3efff]' : 'border-[#e8e1d6] bg-white hover:bg-[#fcfbf8]'
                       }`}
                     >
@@ -704,6 +739,14 @@ export const SalesPage = () => {
                     onChange={(event) => setOrderNotes(event.target.value)}
                   />
                 </label>
+
+                <button
+                  type="button"
+                  onClick={handlePrimaryAction}
+                  className="w-full rounded-[18px] bg-[#4a9a4c] px-5 py-4 text-base font-bold text-white transition hover:bg-[#418a43]"
+                >
+                  Fechar venda
+                </button>
               </div>
             </Panel>
           ) : null}
@@ -825,20 +868,6 @@ export const SalesPage = () => {
                   </div>
                 </div>
               </div>
-
-              <button
-                type="button"
-                onClick={handlePrimaryAction}
-                className={`w-full rounded-[18px] px-5 py-4 text-base font-bold transition ${
-                  (activeStep === 'product' && productStepComplete) ||
-                  (activeStep === 'customer' && customerStepComplete) ||
-                  activeStep === 'payment'
-                    ? 'bg-[#4a9a4c] text-white hover:bg-[#418a43]'
-                    : 'bg-[#ece7dc] text-[#8d8a84]'
-                }`}
-              >
-                {activeStep === 'product' ? 'Ir para cliente' : activeStep === 'customer' ? 'Ir para pagamento' : 'Fechar venda'}
-              </button>
 
               <div className="flex items-center justify-between text-sm text-[#8d8a84]">
                 <span>Carrinhos retidos: 3</span>

@@ -118,10 +118,10 @@ export const salesViewMock: SalesView = {
     { id: 'c3', name: 'Ana Costa', phone: '(11) 96666-4321', lastOrderLabel: 'Última compra há 12 dias' },
   ],
   paymentMethods: [
-    { id: 'PIX', label: 'PIX', helper: 'Confirmação rápida e envio imediato do comprovante.' },
+    { id: 'PIX', label: 'PIX' },
     { id: 'Cartão de crédito', label: 'Cartão de crédito' },
     { id: 'Cartão de débito', label: 'Cartão de débito' },
-    { id: 'Dinheiro', label: 'Dinheiro', helper: 'Permite cálculo de troco na hora.' },
+    { id: 'Dinheiro', label: 'Dinheiro' },
   ],
   customerName: '',
   customerPhone: '',
