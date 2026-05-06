@@ -483,7 +483,7 @@ export const SalesPage = () => {
           </div>
 
           {activeStep === 'product' ? (
-            <Panel title="Etapa 1 · Produtos" description="Pesquise para adicionar produtos ao pedido. Os atalhos servem para acelerar os itens mais vendidos.">
+            <Panel title="Etapa 1 · Produtos">
               <div className="space-y-5">
                 <Input
                   label="Busca rápida"
@@ -560,7 +560,7 @@ export const SalesPage = () => {
           ) : null}
 
           {activeStep === 'customer' ? (
-            <Panel title="Etapa 2 · Cliente" description="Escolha entre buscar um cliente já cadastrado ou criar um novo com nome e telefone.">
+            <Panel title="Etapa 2 · Cliente">
               <div className="space-y-5">
                 <div className="rounded-[28px] bg-[#f3f1eb] p-5">
                   <h3 className="text-[18px] font-bold text-brand-bark">Cliente</h3>
@@ -593,27 +593,35 @@ export const SalesPage = () => {
                         value={customerSearch}
                         onChange={(event) => setCustomerSearch(event.target.value)}
                       />
-                      <div className="grid gap-3">
-                        {filteredCustomers.map((customer) => (
-                          <button
-                            key={customer.id}
-                            type="button"
-                            onClick={() => applyCustomer(customer)}
-                            className="rounded-[20px] border border-[#e8e1d6] bg-white p-4 text-left transition hover:bg-[#fcfbf8]"
-                          >
-                            <div className="flex items-center justify-between gap-4">
-                              <div>
-                                <p className="font-semibold text-brand-bark">{customer.name}</p>
-                                <p className="mt-1 text-sm text-[#8d8a84]">{customer.phone}</p>
-                              </div>
-                              {customer.lastOrderLabel ? (
-                                <span className="rounded-full bg-[#efe9fe] px-3 py-1 text-xs font-semibold text-[#7B5CE6]">
-                                  {customer.lastOrderLabel}
-                                </span>
-                              ) : null}
+                      <div className="h-[320px] overflow-y-auto rounded-[22px] border border-[#ddd5c9] bg-[#fcfaf5] p-3">
+                        <div className="grid gap-3">
+                          {filteredCustomers.length ? (
+                            filteredCustomers.map((customer) => (
+                              <button
+                                key={customer.id}
+                                type="button"
+                                onClick={() => applyCustomer(customer)}
+                                className="rounded-[20px] border border-[#e8e1d6] bg-white p-4 text-left transition hover:bg-[#fcfbf8]"
+                              >
+                                <div className="flex items-center justify-between gap-4">
+                                  <div>
+                                    <p className="font-semibold text-brand-bark">{customer.name}</p>
+                                    <p className="mt-1 text-sm text-[#8d8a84]">{customer.phone}</p>
+                                  </div>
+                                  {customer.lastOrderLabel ? (
+                                    <span className="rounded-full bg-[#efe9fe] px-3 py-1 text-xs font-semibold text-[#7B5CE6]">
+                                      {customer.lastOrderLabel}
+                                    </span>
+                                  ) : null}
+                                </div>
+                              </button>
+                            ))
+                          ) : (
+                            <div className="flex h-[240px] items-center justify-center rounded-[18px] border border-dashed border-[#ddd5c9] bg-white px-6 py-8 text-sm text-[#8d8a84]">
+                              Nenhum cliente encontrado para essa busca.
                             </div>
-                          </button>
-                        ))}
+                          )}
+                        </div>
                       </div>
                     </div>
                   ) : (
@@ -654,7 +662,7 @@ export const SalesPage = () => {
           ) : null}
 
           {activeStep === 'payment' ? (
-            <Panel title="Etapa 3 · Pagamento" description="Ajuste o desconto, escolha a forma de pagamento e confira as observações finais da venda.">
+            <Panel title="Etapa 3 · Pagamento">
               <div className="space-y-5">
                 <div className="grid gap-3 md:grid-cols-2">
                   <Input
