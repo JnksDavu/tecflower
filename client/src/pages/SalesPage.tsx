@@ -12,10 +12,10 @@ import { formatCurrency } from '@/utils/formatters';
 type SalesStep = 'product' | 'customer' | 'payment';
 type CustomerMode = 'new' | 'existing';
 
-const steps: Array<{ id: SalesStep; number: number; label: string; description: string }> = [
-  { id: 'product', number: 1, label: 'Produto', description: 'Busca e montagem do pedido' },
-  { id: 'customer', number: 2, label: 'Cliente', description: 'Selecionar existente ou cadastrar novo' },
-  { id: 'payment', number: 3, label: 'Pagamento', description: 'Desconto, forma de pagamento e fechamento' },
+const steps: Array<{ id: SalesStep; number: number; label: string; description?: string }> = [
+  { id: 'product', number: 1, label: 'Produto' },
+  { id: 'customer', number: 2, label: 'Cliente' },
+  { id: 'payment', number: 3, label: 'Pagamento' },
 ];
 
 const stockTone: Record<SalesCatalogProduct['status'], string> = {
@@ -168,7 +168,7 @@ export const SalesPage = () => {
   }, [view]);
 
   const searchableProducts = useMemo(() => {
-    if (!view || !searchTerm.trim()) {
+    if (!view) {
       return [];
     }
 
@@ -177,6 +177,7 @@ export const SalesPage = () => {
     return view.catalogProducts.filter((product) => {
       const matchesCategory = selectedCategory === 'Todos' || product.categoryName === selectedCategory;
       const matchesSearch =
+        !normalizedSearch ||
         product.name.toLowerCase().includes(normalizedSearch) ||
         product.categoryName.toLowerCase().includes(normalizedSearch);
 
@@ -522,10 +523,10 @@ export const SalesPage = () => {
                   ))}
                 </div>
 
-                {searchTerm.trim() ? (
-                  <div className="grid gap-4 lg:grid-cols-2">
-                    {searchableProducts.length ? (
-                      searchableProducts.map((product) => (
+                <div className="h-[430px] overflow-y-auto rounded-[22px] border border-[#ddd5c9] bg-[#fcfaf5] p-3">
+                  {searchableProducts.length ? (
+                    <div className="grid gap-4">
+                      {searchableProducts.map((product) => (
                         <div key={product.id} className="rounded-[22px] border border-[#e8e1d6] bg-white p-4">
                           <div className="flex items-start justify-between gap-4">
                             <div>
@@ -546,18 +547,14 @@ export const SalesPage = () => {
                             </Button>
                           </div>
                         </div>
-                      ))
-                    ) : (
-                      <div className="rounded-[22px] border border-dashed border-[#ddd5c9] bg-[#fcfaf5] px-6 py-8 text-sm text-[#8d8a84]">
-                        Nenhum produto encontrado para essa busca.
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="rounded-[22px] border border-dashed border-[#ddd5c9] bg-[#fcfaf5] px-6 py-8 text-sm text-[#8d8a84]">
-                    Pesquise um produto para adicionar ao pedido. A lista completa não fica exposta para manter a operação mais rápida.
-                  </div>
-                )}
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex h-full items-center justify-center rounded-[18px] border border-dashed border-[#ddd5c9] bg-white px-6 py-8 text-sm text-[#8d8a84]">
+                      Nenhum produto encontrado para essa busca ou categoria.
+                    </div>
+                  )}
+                </div>
               </div>
             </Panel>
           ) : null}
@@ -660,15 +657,18 @@ export const SalesPage = () => {
             <Panel title="Etapa 3 · Pagamento" description="Ajuste o desconto, escolha a forma de pagamento e confira as observações finais da venda.">
               <div className="space-y-5">
                 <div className="grid gap-3 md:grid-cols-2">
-                  <div className="rounded-[20px] border border-[#e8e1d6] bg-[#fcfbf8] px-4 py-3 text-sm text-[#8d8a84]">
-                    O desconto geral é aplicado no resumo lateral, logo abaixo do total do pedido.
-                  </div>
                   <Input
                     label="Valor recebido"
                     value={paidAmountInput}
                     onChange={(event) => setPaidAmountInput(event.target.value)}
                     placeholder="0,00"
                   />
+                  <div className="flex flex-col gap-2 text-sm font-medium text-brand-bark">
+                    <span>Valor faltante</span>
+                    <div className="flex h-12 items-center rounded-full border border-[#d7d7d1] bg-[#f4f4f1] px-4 text-sm font-semibold text-brand-bark">
+                      {formatCurrency(remainingAmount)}
+                    </div>
+                  </div>
                 </div>
 
                 <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
