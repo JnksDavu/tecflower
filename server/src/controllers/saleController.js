@@ -2,16 +2,54 @@ import { saleService } from '../services/saleService.js';
 import { sendSuccess } from '../utils/apiResponse.js';
 
 export const saleController = {
-  list: (_req, res) => {
-    sendSuccess(res, saleService.list(), 'Sales loaded');
-  },
-  getById: (req, res) => {
-    const sale = saleService.getById(req.params.id);
+  getView: async (req, res, next) => {
+    try {
+      const view = await saleService.getView({
+        accountId: req.auth.accountId,
+      });
 
-    if (!sale) {
-      return res.status(404).json({ message: 'Sale not found' });
+      sendSuccess(res, view, 'Tela de vendas carregada.');
+    } catch (error) {
+      next(error);
     }
+  },
 
-    return sendSuccess(res, sale, 'Sale loaded');
+  list: async (req, res, next) => {
+    try {
+      const sales = await saleService.list({
+        accountId: req.auth.accountId,
+      });
+
+      sendSuccess(res, sales, 'Vendas carregadas.');
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  getById: async (req, res, next) => {
+    try {
+      const sale = await saleService.getById({
+        accountId: req.auth.accountId,
+        saleId: req.params.id,
+      });
+
+      sendSuccess(res, sale, 'Venda carregada.');
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  create: async (req, res, next) => {
+    try {
+      const sale = await saleService.create({
+        accountId: req.auth.accountId,
+        userId: req.auth.userId,
+        payload: req.body,
+      });
+
+      sendSuccess(res, sale, 'Venda concluída com sucesso.');
+    } catch (error) {
+      next(error);
+    }
   },
 };

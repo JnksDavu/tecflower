@@ -146,6 +146,60 @@ export interface SalesView {
   quickNotes: string[];
 }
 
+export interface SaleSubmitPayload {
+  customer: {
+    customerId?: string;
+    name: string;
+    phone: string;
+    cpf?: string;
+    notes?: string;
+  };
+  items: SaleCartItem[];
+  paymentMethod: SalesPaymentMethodOption['id'];
+  paidAmount: number;
+  discountMode: DiscountMode;
+  discountValue: number;
+  notes: string;
+}
+
+export interface SaleRecordItem {
+  id: string;
+  productId: string;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+  grossAmount: number;
+  discountMode: DiscountMode;
+  discountValue: number;
+  discountAmount: number;
+  totalAmount: number;
+}
+
+export interface SaleRecord {
+  id: string;
+  saleNumber: number;
+  status: 'pending' | 'completed' | 'cancelled';
+  paymentMethod: SalesPaymentMethodOption['id'];
+  subtotal: number;
+  itemsDiscountAmount: number;
+  discountMode: DiscountMode;
+  discountValue: number;
+  discountAmount: number;
+  totalAmount: number;
+  paidAmount: number;
+  changeAmount: number;
+  notes: string;
+  soldAt: string;
+  createdAt: string;
+  customer: {
+    id: string;
+    name: string;
+    phone: string;
+    cpf?: string;
+  } | null;
+  items: SaleRecordItem[];
+}
+
 export interface FinanceSummaryCard {
   id: string;
   title: string;

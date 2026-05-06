@@ -115,6 +115,7 @@ export const SalesPage = () => {
   const [view, setView] = useState<SalesView | null>(null);
   const [activeStep, setActiveStep] = useState<SalesStep>('product');
   const [customerMode, setCustomerMode] = useState<CustomerMode>('new');
+  const [selectedCustomerId, setSelectedCustomerId] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Todos');
   const [cartItems, setCartItems] = useState<SaleCartItem[]>([]);
@@ -129,6 +130,7 @@ export const SalesPage = () => {
   const [paidAmountInput, setPaidAmountInput] = useState('0,00');
   const [orderNotes, setOrderNotes] = useState('');
   const [statusMessage, setStatusMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [itemDiscountTarget, setItemDiscountTarget] = useState<string | null>(null);
   const [itemDiscountDraftMode, setItemDiscountDraftMode] = useState<DiscountMode>('fixed');
   const [itemDiscountDraftValue, setItemDiscountDraftValue] = useState('0,00');
@@ -136,10 +138,12 @@ export const SalesPage = () => {
   const [orderDiscountDraftMode, setOrderDiscountDraftMode] = useState<DiscountMode>('fixed');
   const [orderDiscountDraftValue, setOrderDiscountDraftValue] = useState('0,00');
 
-  useEffect(() => {
-    saleController.getView().then((response) => {
+  const loadView = async () => {
+    const response = await saleController.getView();
+
       setView(response);
       setCartItems(response.cartItems);
+      setSelectedCustomerId('');
       setCustomerName(response.customerName);
       setCustomerPhone(response.customerPhone);
       setCustomerCpf(response.customerCpf);
@@ -148,6 +152,11 @@ export const SalesPage = () => {
       setDiscountMode('fixed');
       setDiscountInput(formatMoneyInput(response.discountAmount));
       setPaidAmountInput(formatMoneyInput(response.paidAmount));
+  };
+
+  useEffect(() => {
+    loadView().catch((error) => {
+      setStatusMessage(error instanceof Error ? error.message : 'Não foi possível carregar a tela de vendas.');
     });
   }, []);
 
@@ -345,6 +354,7 @@ export const SalesPage = () => {
   };
 
   const applyCustomer = (customer: SalesCustomer) => {
+    setSelectedCustomerId(customer.id);
     setCustomerName(customer.name);
     setCustomerPhone(customer.phone);
     setCustomerCpf(customer.cpf ?? '');
@@ -360,6 +370,7 @@ export const SalesPage = () => {
     setCartItems([]);
     setActiveStep('product');
     setCustomerMode('new');
+    setSelectedCustomerId('');
     setCustomerSearch('');
     setCustomerName('');
     setCustomerPhone('');
@@ -393,7 +404,7 @@ export const SalesPage = () => {
     setActiveStep(step);
   };
 
-  const handlePrimaryAction = () => {
+  const handlePrimaryAction = async () => {
     if (activeStep === 'product') {
       if (!productStepComplete) {
         setStatusMessage('Adicione pelo menos um produto para continuar.');
@@ -428,7 +439,36 @@ export const SalesPage = () => {
       return;
     }
 
-    setStatusMessage('Venda pronta para integração com o back-end.');
+    setIsSubmitting(true);
+
+    try {
+      const effectivePaidAmount = selectedPayment === 'Dinheiro' ? paidAmount : total;
+
+      const sale = await saleController.create({
+        customer: {
+          customerId: selectedCustomerId || undefined,
+          name: customerName,
+          phone: customerPhone,
+          cpf: customerCpf,
+          notes: customerNotes,
+        },
+        items: cartItems,
+        paymentMethod: selectedPayment,
+        paidAmount: effectivePaidAmount,
+        discountMode,
+        discountValue: orderDiscountValue,
+        notes: orderNotes,
+      });
+
+      await loadView();
+      setActiveStep('product');
+      setCustomerMode('new');
+      setStatusMessage(`Venda #${sale.saleNumber} concluída com sucesso.`);
+    } catch (error) {
+      setStatusMessage(error instanceof Error ? error.message : 'Não foi possível concluir a venda.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!view) {
@@ -559,13 +599,14 @@ export const SalesPage = () => {
                 <button
                   type="button"
                   onClick={handlePrimaryAction}
+                  disabled={isSubmitting}
                   className={`w-full rounded-[18px] px-5 py-4 text-base font-bold transition ${
                     productStepComplete
-                      ? 'bg-[#4a9a4c] text-white hover:bg-[#418a43]'
+                      ? 'bg-[#4a9a4c] text-white hover:bg-[#418a43] disabled:cursor-not-allowed disabled:bg-[#9ec79f]'
                       : 'bg-[#ece7dc] text-[#8d8a84]'
                   }`}
                 >
-                  Ir para cliente
+                  {isSubmitting ? 'Salvando...' : 'Ir para cliente'}
                 </button>
               </div>
             </Panel>
@@ -588,7 +629,10 @@ export const SalesPage = () => {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setCustomerMode('new')}
+                      onClick={() => {
+                        setCustomerMode('new');
+                        setSelectedCustomerId('');
+                      }}
                       className={`rounded-[18px] px-5 py-4 text-base font-semibold transition ${
                         customerMode === 'new' ? 'bg-[#4a9a4c] text-white' : 'bg-white text-[#4a9a4c]'
                       }`}
@@ -642,19 +686,28 @@ export const SalesPage = () => {
                         label="Nome do cliente *"
                         placeholder="Nome do cliente"
                         value={customerName}
-                        onChange={(event) => setCustomerName(event.target.value)}
+                        onChange={(event) => {
+                          setSelectedCustomerId('');
+                          setCustomerName(event.target.value);
+                        }}
                       />
                       <Input
                         label="Telefone *"
                         placeholder="Telefone"
                         value={customerPhone}
-                        onChange={(event) => setCustomerPhone(event.target.value)}
+                        onChange={(event) => {
+                          setSelectedCustomerId('');
+                          setCustomerPhone(event.target.value);
+                        }}
                       />
                       <Input
                         label="CPF"
                         placeholder="Opcional"
                         value={customerCpf}
-                        onChange={(event) => setCustomerCpf(event.target.value)}
+                        onChange={(event) => {
+                          setSelectedCustomerId('');
+                          setCustomerCpf(event.target.value);
+                        }}
                       />
                     </div>
                   )}
@@ -673,13 +726,14 @@ export const SalesPage = () => {
                 <button
                   type="button"
                   onClick={handlePrimaryAction}
+                  disabled={isSubmitting}
                   className={`w-full rounded-[18px] px-5 py-4 text-base font-bold transition ${
                     customerStepComplete
-                      ? 'bg-[#4a9a4c] text-white hover:bg-[#418a43]'
+                      ? 'bg-[#4a9a4c] text-white hover:bg-[#418a43] disabled:cursor-not-allowed disabled:bg-[#9ec79f]'
                       : 'bg-[#ece7dc] text-[#8d8a84]'
                   }`}
                 >
-                  Ir para pagamento
+                  {isSubmitting ? 'Salvando...' : 'Ir para pagamento'}
                 </button>
               </div>
             </Panel>
@@ -688,32 +742,6 @@ export const SalesPage = () => {
           {activeStep === 'payment' ? (
             <Panel title="Etapa 3 · Pagamento">
               <div className="space-y-5">
-                <div className="grid gap-3 md:grid-cols-2">
-                  <Input
-                    label="Valor recebido"
-                    value={paidAmountInput}
-                    onChange={(event) => setPaidAmountInput(event.target.value)}
-                    placeholder="0,00"
-                  />
-                  <div className="flex flex-col gap-2 text-sm font-medium text-brand-bark">
-                    <span>Valor faltante</span>
-                    <div className="flex h-12 items-center rounded-full border border-[#d7d7d1] bg-[#f4f4f1] px-4 text-sm font-semibold text-brand-bark">
-                      {formatCurrency(remainingAmount)}
-                    </div>
-                  </div>
-                </div>
-
-                {selectedPayment === 'Dinheiro' ? (
-                  <div className="grid gap-3 md:grid-cols-2">
-                    <div className="flex flex-col gap-2 text-sm font-medium text-brand-bark">
-                      <span>Troco</span>
-                      <div className="flex h-12 items-center rounded-full border border-[#d7d7d1] bg-[#f4f4f1] px-4 text-sm font-semibold text-brand-bark">
-                        {formatCurrency(changeAmount)}
-                      </div>
-                    </div>
-                  </div>
-                ) : null}
-
                 <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
                   {view.paymentMethods.map((method) => (
                     <button
@@ -730,6 +758,63 @@ export const SalesPage = () => {
                   ))}
                 </div>
 
+                {selectedPayment === 'Dinheiro' ? (
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <Input
+                      label="Valor recebido"
+                      value={paidAmountInput}
+                      onChange={(event) => setPaidAmountInput(event.target.value)}
+                      placeholder="0,00"
+                    />
+                    <div className="flex flex-col gap-2 text-sm font-medium text-brand-bark">
+                      <span>Troco</span>
+                      <div className="flex h-12 items-center rounded-full border border-[#d7d7d1] bg-[#f4f4f1] px-4 text-sm font-semibold text-brand-bark">
+                        {formatCurrency(changeAmount)}
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+
+                <div className="rounded-[20px] border border-[#ece6db] bg-white p-4">
+                  <div className="flex items-center justify-between text-sm text-[#716f69]">
+                    <span>Subtotal</span>
+                    <span>{formatCurrency(subtotal)}</span>
+                  </div>
+                  <div className="mt-2 flex items-center justify-between text-sm text-[#716f69]">
+                    <span>Descontos nos itens</span>
+                    <span>- {formatCurrency(itemsDiscountTotal)}</span>
+                  </div>
+                  <div className="mt-2 flex items-center justify-between text-sm text-[#716f69]">
+                    <span>Desconto geral</span>
+                    <span>- {formatCurrency(orderDiscountAmount)}</span>
+                  </div>
+                  <div className="mt-3 flex items-center justify-between text-[28px] font-bold text-[#4a9a4c]">
+                    <span>Total</span>
+                    <span>{formatCurrency(total)}</span>
+                  </div>
+                  <div className="mt-4 flex items-center justify-between gap-3 rounded-[16px] border border-[#e8e1d6] bg-[#fcfbf8] p-3">
+                    <div>
+                      <p className="text-sm font-semibold text-brand-bark">Desconto geral</p>
+                      <p className="mt-1 text-xs text-[#8d8a84]">
+                        {orderDiscountAmount > 0
+                          ? `${discountMode === 'percent' ? `${orderDiscountValue}%` : formatCurrency(orderDiscountValue)} aplicado`
+                          : 'Não aplicado'}
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={openOrderDiscountModal}
+                      className="gap-2 border-[#cae6cc] text-[#2f7d32] hover:bg-[#edf8ee]"
+                    >
+                      <BadgePercent className="h-4 w-4" />
+                      Aplicar desconto
+                    </Button>
+                  </div>
+                </div>
+
+                
+
                 <label className="flex flex-col gap-2 text-sm font-medium text-brand-bark">
                   <span>Observações da venda</span>
                   <textarea
@@ -743,9 +828,10 @@ export const SalesPage = () => {
                 <button
                   type="button"
                   onClick={handlePrimaryAction}
-                  className="w-full rounded-[18px] bg-[#4a9a4c] px-5 py-4 text-base font-bold text-white transition hover:bg-[#418a43]"
+                  disabled={isSubmitting}
+                  className="w-full rounded-[18px] bg-[#4a9a4c] px-5 py-4 text-base font-bold text-white transition hover:bg-[#418a43] disabled:cursor-not-allowed disabled:bg-[#9ec79f]"
                 >
-                  Fechar venda
+                  {isSubmitting ? 'Fechando venda...' : 'Fechar venda'}
                 </button>
               </div>
             </Panel>
@@ -801,73 +887,23 @@ export const SalesPage = () => {
                 </div>
               </div>
 
-              <div className="rounded-[20px] border border-[#ece6db] bg-white p-4">
-                <div className="flex items-center justify-between text-sm text-[#716f69]">
-                  <span>Subtotal</span>
-                  <span>{formatCurrency(subtotal)}</span>
-                </div>
-                <div className="mt-2 flex items-center justify-between text-sm text-[#716f69]">
-                  <span>Descontos nos itens</span>
-                  <span>- {formatCurrency(itemsDiscountTotal)}</span>
-                </div>
-                <div className="mt-2 flex items-center justify-between text-sm text-[#716f69]">
-                  <span>Desconto geral</span>
-                  <span>- {formatCurrency(orderDiscountAmount)}</span>
-                </div>
-                <div className="mt-3 flex items-center justify-between text-[28px] font-bold text-[#4a9a4c]">
-                  <span>Total</span>
-                  <span>{formatCurrency(total)}</span>
-                </div>
-                <div className="mt-4 flex items-center justify-between gap-3 rounded-[16px] border border-[#e8e1d6] bg-[#fcfbf8] p-3">
-                  <div>
-                    <p className="text-sm font-semibold text-brand-bark">Desconto geral</p>
-                    <p className="mt-1 text-xs text-[#8d8a84]">
-                      {orderDiscountAmount > 0
-                        ? `${discountMode === 'percent' ? `${orderDiscountValue}%` : formatCurrency(orderDiscountValue)} aplicado`
-                        : 'Não aplicado'}
-                    </p>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={openOrderDiscountModal}
-                    className="gap-2 border-[#cae6cc] text-[#2f7d32] hover:bg-[#edf8ee]"
-                  >
-                    <BadgePercent className="h-4 w-4" />
-                    Aplicar desconto
-                  </Button>
-                </div>
-              </div>
+              
 
-              <div className="rounded-[20px] border border-[#ece6db] bg-white p-4">
-                <p className="text-sm font-semibold text-brand-bark">Pagamento rápido</p>
-                <div className="mt-3 grid grid-cols-3 gap-2">
-                  {view.paymentMethods.slice(0, 3).map((method) => (
-                    <div
-                      key={method.id}
-                      className={`rounded-[14px] px-3 py-3 text-center text-sm font-semibold ${
-                        selectedPayment === method.id ? 'bg-[#f3efff] text-[#7B5CE6]' : 'bg-[#f5f2ea] text-brand-bark'
-                      }`}
-                    >
-                      {method.label.replace('Cartão de ', '')}
+              {selectedPayment === 'Dinheiro' ? (
+                <div className="rounded-[20px] border border-[#ece6db] bg-white p-4">
+                  <p className="text-sm font-semibold text-brand-bark">Pagamento em dinheiro</p>
+                  <div className="mt-4 space-y-1 text-sm text-[#716f69]">
+                    <div className="flex items-center justify-between">
+                      <span>Recebido</span>
+                      <span>{formatCurrency(paidAmount)}</span>
                     </div>
-                  ))}
-                </div>
-                <div className="mt-4 space-y-1 text-sm text-[#716f69]">
-                  <div className="flex items-center justify-between">
-                    <span>Recebido</span>
-                    <span>{formatCurrency(paidAmount)}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Falta receber</span>
-                    <span>{formatCurrency(remainingAmount)}</span>
-                  </div>
-                  <div className="flex items-center justify-between font-semibold text-[#2f7d32]">
-                    <span>Troco</span>
-                    <span>{formatCurrency(changeAmount)}</span>
+                    <div className="flex items-center justify-between font-semibold text-[#2f7d32]">
+                      <span>Troco</span>
+                      <span>{formatCurrency(changeAmount)}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
+              ) : null}
 
               <div className="flex items-center justify-between text-sm text-[#8d8a84]">
                 <span>Carrinhos retidos: 3</span>
