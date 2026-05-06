@@ -1,5 +1,6 @@
 export type ProductStatus = 'Em estoque' | 'Estoque baixo' | 'Sem estoque';
 export type FinanceEntryType = 'entrada' | 'saida';
+export type DiscountMode = 'fixed' | 'percent';
 
 export interface ProductCategory {
   id: string;
@@ -96,6 +97,8 @@ export interface ProductStockMovement {
 export interface SaleCartItem {
   productId: string;
   quantity: number;
+  discountMode?: DiscountMode;
+  discountValue?: number;
 }
 
 export interface PopularProduct {

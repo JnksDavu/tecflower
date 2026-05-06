@@ -1,19 +1,21 @@
 import { useEffect, useMemo, useState } from 'react';
+import { BadgePercent } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { Input } from '@/components/Input';
+import { Modal } from '@/components/Modal';
 import { PageHeader } from '@/components/PageHeader';
 import { Panel } from '@/components/Panel';
 import { saleController } from '@/controllers/saleController';
-import type { SaleCartItem, SalesCatalogProduct, SalesCustomer, SalesPaymentMethodOption, SalesView } from '@/models/types';
+import type { DiscountMode, SaleCartItem, SalesCatalogProduct, SalesCustomer, SalesPaymentMethodOption, SalesView } from '@/models/types';
 import { formatCurrency } from '@/utils/formatters';
 
 type SalesStep = 'product' | 'customer' | 'payment';
 type CustomerMode = 'new' | 'existing';
 
-const steps: Array<{ id: SalesStep; number: number; label: string; }> = [
-  { id: 'product', number: 1, label: 'Produto'},
-  { id: 'customer', number: 2, label: 'Cliente' },
-  { id: 'payment', number: 3, label: 'Pagamento'},
+const steps: Array<{ id: SalesStep; number: number; label: string; description: string }> = [
+  { id: 'product', number: 1, label: 'Produto', description: 'Busca e montagem do pedido' },
+  { id: 'customer', number: 2, label: 'Cliente', description: 'Selecionar existente ou cadastrar novo' },
+  { id: 'payment', number: 3, label: 'Pagamento', description: 'Desconto, forma de pagamento e fechamento' },
 ];
 
 const stockTone: Record<SalesCatalogProduct['status'], string> = {
@@ -29,6 +31,18 @@ const parseMoney = (value: string) => {
 };
 
 const formatMoneyInput = (value: number) => value.toFixed(2).replace('.', ',');
+
+const applyDiscount = (baseAmount: number, discountMode: DiscountMode, discountValue: number) => {
+  if (discountValue <= 0 || baseAmount <= 0) {
+    return 0;
+  }
+
+  if (discountMode === 'percent') {
+    return Math.min(baseAmount, (baseAmount * discountValue) / 100);
+  }
+
+  return Math.min(baseAmount, discountValue);
+};
 
 const QuantityButton = ({ onClick, children }: { onClick: () => void; children: string }) => (
   <button
@@ -77,6 +91,26 @@ const StepChevron = () => (
   </div>
 );
 
+const DiscountModeButton = ({
+  active,
+  label,
+  onClick,
+}: {
+  active: boolean;
+  label: string;
+  onClick: () => void;
+}) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className={`rounded-full px-4 py-3 text-sm font-semibold transition ${
+      active ? 'bg-[#4a9a4c] text-white' : 'bg-[#f5f2ea] text-brand-bark'
+    }`}
+  >
+    {label}
+  </button>
+);
+
 export const SalesPage = () => {
   const [view, setView] = useState<SalesView | null>(null);
   const [activeStep, setActiveStep] = useState<SalesStep>('product');
@@ -90,10 +124,17 @@ export const SalesPage = () => {
   const [customerCpf, setCustomerCpf] = useState('');
   const [customerNotes, setCustomerNotes] = useState('');
   const [selectedPayment, setSelectedPayment] = useState<SalesPaymentMethodOption['id']>('PIX');
+  const [discountMode, setDiscountMode] = useState<DiscountMode>('fixed');
   const [discountInput, setDiscountInput] = useState('0,00');
   const [paidAmountInput, setPaidAmountInput] = useState('0,00');
   const [orderNotes, setOrderNotes] = useState('');
   const [statusMessage, setStatusMessage] = useState('');
+  const [itemDiscountTarget, setItemDiscountTarget] = useState<string | null>(null);
+  const [itemDiscountDraftMode, setItemDiscountDraftMode] = useState<DiscountMode>('fixed');
+  const [itemDiscountDraftValue, setItemDiscountDraftValue] = useState('0,00');
+  const [isOrderDiscountModalOpen, setIsOrderDiscountModalOpen] = useState(false);
+  const [orderDiscountDraftMode, setOrderDiscountDraftMode] = useState<DiscountMode>('fixed');
+  const [orderDiscountDraftValue, setOrderDiscountDraftValue] = useState('0,00');
 
   useEffect(() => {
     saleController.getView().then((response) => {
@@ -103,7 +144,8 @@ export const SalesPage = () => {
       setCustomerPhone(response.customerPhone);
       setCustomerCpf(response.customerCpf);
       setCustomerNotes(response.customerNotes);
-      setSelectedPayment(response.selectedPayment);
+      setSelectedPayment(response.selectedPayment || 'PIX');
+      setDiscountMode('fixed');
       setDiscountInput(formatMoneyInput(response.discountAmount));
       setPaidAmountInput(formatMoneyInput(response.paidAmount));
     });
@@ -170,16 +212,36 @@ export const SalesPage = () => {
           return {
             ...item,
             product,
-            lineTotal: product.price * item.quantity,
+            grossLineTotal: product.price * item.quantity,
           };
         })
         .filter((item): item is NonNullable<typeof item> => Boolean(item)),
     [cartItems, productMap],
   );
 
-  const subtotal = useMemo(() => cartDetails.reduce((sum, item) => sum + item.lineTotal, 0), [cartDetails]);
-  const discountAmount = parseMoney(discountInput);
-  const total = Math.max(0, subtotal - discountAmount);
+  const cartPricing = useMemo(
+    () =>
+      cartDetails.map((item) => {
+        const discountValue = item.discountValue ?? 0;
+        const itemDiscountMode = item.discountMode ?? 'fixed';
+        const lineDiscount = applyDiscount(item.grossLineTotal, itemDiscountMode, discountValue);
+
+        return {
+          ...item,
+          itemDiscountMode,
+          lineDiscount,
+          lineTotal: Math.max(0, item.grossLineTotal - lineDiscount),
+        };
+      }),
+    [cartDetails],
+  );
+
+  const subtotal = useMemo(() => cartPricing.reduce((sum, item) => sum + item.grossLineTotal, 0), [cartPricing]);
+  const itemsDiscountTotal = useMemo(() => cartPricing.reduce((sum, item) => sum + item.lineDiscount, 0), [cartPricing]);
+  const subtotalAfterItemsDiscount = Math.max(0, subtotal - itemsDiscountTotal);
+  const orderDiscountValue = parseMoney(discountInput);
+  const orderDiscountAmount = applyDiscount(subtotalAfterItemsDiscount, discountMode, orderDiscountValue);
+  const total = Math.max(0, subtotalAfterItemsDiscount - orderDiscountAmount);
   const paidAmount = parseMoney(paidAmountInput);
   const changeAmount = Math.max(0, paidAmount - total);
   const remainingAmount = Math.max(0, total - paidAmount);
@@ -216,6 +278,71 @@ export const SalesPage = () => {
     setStatusMessage('');
   };
 
+  const updateItemDiscountMode = (productId: string, nextMode: DiscountMode) => {
+    setCartItems((current) =>
+      current.map((item) =>
+        item.productId === productId
+          ? { ...item, discountMode: nextMode }
+          : item,
+      ),
+    );
+  };
+
+  const updateItemDiscountValue = (productId: string, nextValue: string) => {
+    const parsed = parseMoney(nextValue);
+
+    setCartItems((current) =>
+      current.map((item) =>
+        item.productId === productId
+          ? { ...item, discountValue: parsed }
+          : item,
+      ),
+    );
+  };
+
+  const openItemDiscountModal = (productId: string) => {
+    const target = cartItems.find((item) => item.productId === productId);
+    setItemDiscountTarget(productId);
+    setItemDiscountDraftMode(target?.discountMode ?? 'fixed');
+    setItemDiscountDraftValue(
+      target?.discountValue ? formatMoneyInput(target.discountValue) : '0,00',
+    );
+  };
+
+  const closeItemDiscountModal = () => {
+    setItemDiscountTarget(null);
+    setItemDiscountDraftMode('fixed');
+    setItemDiscountDraftValue('0,00');
+  };
+
+  const applyItemDiscountDraft = () => {
+    if (!itemDiscountTarget) {
+      return;
+    }
+
+    updateItemDiscountMode(itemDiscountTarget, itemDiscountDraftMode);
+    updateItemDiscountValue(itemDiscountTarget, itemDiscountDraftValue);
+    closeItemDiscountModal();
+  };
+
+  const openOrderDiscountModal = () => {
+    setOrderDiscountDraftMode(discountMode);
+    setOrderDiscountDraftValue(discountInput);
+    setIsOrderDiscountModalOpen(true);
+  };
+
+  const closeOrderDiscountModal = () => {
+    setIsOrderDiscountModalOpen(false);
+    setOrderDiscountDraftMode('fixed');
+    setOrderDiscountDraftValue('0,00');
+  };
+
+  const applyOrderDiscountDraft = () => {
+    setDiscountMode(orderDiscountDraftMode);
+    setDiscountInput(orderDiscountDraftValue);
+    setIsOrderDiscountModalOpen(false);
+  };
+
   const applyCustomer = (customer: SalesCustomer) => {
     setCustomerName(customer.name);
     setCustomerPhone(customer.phone);
@@ -237,9 +364,10 @@ export const SalesPage = () => {
     setCustomerPhone('');
     setCustomerCpf('');
     setCustomerNotes('');
+    setDiscountMode('fixed');
     setDiscountInput('0,00');
     setPaidAmountInput('0,00');
-    setSelectedPayment(view.selectedPayment);
+    setSelectedPayment(view.selectedPayment || 'PIX');
     setOrderNotes('');
     setStatusMessage('');
   };
@@ -305,6 +433,23 @@ export const SalesPage = () => {
   if (!view) {
     return null;
   }
+
+  const itemDiscountProduct = itemDiscountTarget ? productMap.get(itemDiscountTarget) : null;
+  const itemDiscountBase = itemDiscountProduct
+    ? itemDiscountProduct.price * (cartItems.find((item) => item.productId === itemDiscountTarget)?.quantity ?? 0)
+    : 0;
+  const itemDiscountPreview = applyDiscount(
+    itemDiscountBase,
+    itemDiscountDraftMode,
+    parseMoney(itemDiscountDraftValue),
+  );
+  const itemFinalPreview = Math.max(0, itemDiscountBase - itemDiscountPreview);
+  const orderDiscountPreview = applyDiscount(
+    subtotalAfterItemsDiscount,
+    orderDiscountDraftMode,
+    parseMoney(orderDiscountDraftValue),
+  );
+  const orderFinalPreview = Math.max(0, subtotalAfterItemsDiscount - orderDiscountPreview);
 
   return (
     <div className="px-4 py-6">
@@ -515,12 +660,9 @@ export const SalesPage = () => {
             <Panel title="Etapa 3 · Pagamento" description="Ajuste o desconto, escolha a forma de pagamento e confira as observações finais da venda.">
               <div className="space-y-5">
                 <div className="grid gap-3 md:grid-cols-2">
-                  <Input
-                    label="Desconto"
-                    value={discountInput}
-                    onChange={(event) => setDiscountInput(event.target.value)}
-                    placeholder="0,00"
-                  />
+                  <div className="rounded-[20px] border border-[#e8e1d6] bg-[#fcfbf8] px-4 py-3 text-sm text-[#8d8a84]">
+                    O desconto geral é aplicado no resumo lateral, logo abaixo do total do pedido.
+                  </div>
                   <Input
                     label="Valor recebido"
                     value={paidAmountInput}
@@ -569,17 +711,10 @@ export const SalesPage = () => {
               </div>
 
               <div className="rounded-[20px] border border-[#ece6db] bg-white p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm font-semibold text-brand-bark">Desconto</p>
-                  <span className="text-sm font-semibold text-[#4a9a4c]">{formatCurrency(discountAmount)}</span>
-                </div>
-              </div>
-
-              <div className="rounded-[20px] border border-[#ece6db] bg-white p-4">
                 <p className="text-sm font-semibold text-brand-bark">Itens no pedido</p>
                 <div className="mt-3 space-y-3">
-                  {cartDetails.length ? (
-                    cartDetails.map((item) => (
+                  {cartPricing.length ? (
+                    cartPricing.map((item) => (
                       <div key={item.product.id} className="rounded-[18px] bg-[#faf8f4] p-3">
                         <div className="flex items-start justify-between gap-3">
                           <div>
@@ -588,10 +723,24 @@ export const SalesPage = () => {
                           </div>
                           <p className="text-sm font-semibold text-brand-bark">{formatCurrency(item.lineTotal)}</p>
                         </div>
-                        <div className="mt-3 flex items-center gap-2">
-                          <QuantityButton onClick={() => updateCartQuantity(item.product.id, item.quantity - 1)}>-</QuantityButton>
-                          <span className="min-w-[24px] text-center text-sm font-semibold text-brand-bark">{item.quantity}</span>
-                          <QuantityButton onClick={() => updateCartQuantity(item.product.id, item.quantity + 1)}>+</QuantityButton>
+                        <div className="mt-3 flex flex-wrap items-center justify-center gap-3 rounded-[16px] border border-[#e8e1d6] bg-white p-3">
+                          <div className="flex items-center gap-2">
+                            <QuantityButton onClick={() => updateCartQuantity(item.product.id, item.quantity - 1)}>-</QuantityButton>
+                            <span className="min-w-[24px] text-center text-sm font-semibold text-brand-bark">{item.quantity}</span>
+                            <QuantityButton onClick={() => updateCartQuantity(item.product.id, item.quantity + 1)}>+</QuantityButton>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openItemDiscountModal(item.product.id)}
+                            className="gap-2 border-[#cae6cc] text-[#2f7d32] hover:bg-[#edf8ee]"
+                          >
+                            <BadgePercent className="h-4 w-4" />
+                            Aplicar desconto
+                          </Button>
+                          <p className="text-xs font-semibold text-[#8d8a84]">
+                            {item.lineDiscount > 0 ? `- ${formatCurrency(item.lineDiscount)}` : 'Sem desconto'}
+                          </p>
                         </div>
                       </div>
                     ))
@@ -607,12 +756,35 @@ export const SalesPage = () => {
                   <span>{formatCurrency(subtotal)}</span>
                 </div>
                 <div className="mt-2 flex items-center justify-between text-sm text-[#716f69]">
-                  <span>Desconto</span>
-                  <span>- {formatCurrency(discountAmount)}</span>
+                  <span>Descontos nos itens</span>
+                  <span>- {formatCurrency(itemsDiscountTotal)}</span>
+                </div>
+                <div className="mt-2 flex items-center justify-between text-sm text-[#716f69]">
+                  <span>Desconto geral</span>
+                  <span>- {formatCurrency(orderDiscountAmount)}</span>
                 </div>
                 <div className="mt-3 flex items-center justify-between text-[28px] font-bold text-[#4a9a4c]">
                   <span>Total</span>
                   <span>{formatCurrency(total)}</span>
+                </div>
+                <div className="mt-4 flex items-center justify-between gap-3 rounded-[16px] border border-[#e8e1d6] bg-[#fcfbf8] p-3">
+                  <div>
+                    <p className="text-sm font-semibold text-brand-bark">Desconto geral</p>
+                    <p className="mt-1 text-xs text-[#8d8a84]">
+                      {orderDiscountAmount > 0
+                        ? `${discountMode === 'percent' ? `${orderDiscountValue}%` : formatCurrency(orderDiscountValue)} aplicado`
+                        : 'Não aplicado'}
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={openOrderDiscountModal}
+                    className="gap-2 border-[#cae6cc] text-[#2f7d32] hover:bg-[#edf8ee]"
+                  >
+                    <BadgePercent className="h-4 w-4" />
+                    Aplicar desconto
+                  </Button>
                 </div>
               </div>
 
@@ -670,6 +842,88 @@ export const SalesPage = () => {
           </Panel>
         </aside>
       </div>
+
+      <Modal
+        isOpen={Boolean(itemDiscountTarget)}
+        onClose={closeItemDiscountModal}
+        title="Aplicar desconto no item"
+        description="Escolha desconto em reais ou percentual e confira o valor final antes de aplicar."
+        action={
+          <Button onClick={applyItemDiscountDraft}>Aplicar desconto</Button>
+        }
+      >
+        <div className="grid gap-5">
+          <div className="grid gap-3 md:grid-cols-[auto_auto_minmax(0,1fr)]">
+            <DiscountModeButton
+              active={itemDiscountDraftMode === 'fixed'}
+              label="R$"
+              onClick={() => setItemDiscountDraftMode('fixed')}
+            />
+            <DiscountModeButton
+              active={itemDiscountDraftMode === 'percent'}
+              label="%"
+              onClick={() => setItemDiscountDraftMode('percent')}
+            />
+            <input
+              className="h-12 rounded-full border border-[#d7d7d1] bg-[#f4f4f1] px-4 text-sm text-brand-bark outline-none transition placeholder:text-[#9b9a94] focus:border-brand-sage focus:bg-white"
+              value={itemDiscountDraftValue}
+              onChange={(event) => setItemDiscountDraftValue(event.target.value)}
+              placeholder={itemDiscountDraftMode === 'fixed' ? '0,00' : '0'}
+            />
+          </div>
+          <div className="grid gap-3 rounded-[22px] bg-[#f8faf8] p-4 md:grid-cols-2">
+            <div>
+              <p className="text-xs uppercase tracking-[0.12em] text-[#8d8a84]">Valor original</p>
+              <p className="mt-2 text-2xl font-bold text-brand-bark">{formatCurrency(itemDiscountBase)}</p>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-[0.12em] text-[#8d8a84]">Valor final</p>
+              <p className="mt-2 text-2xl font-bold text-[#4a9a4c]">{formatCurrency(itemFinalPreview)}</p>
+            </div>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={isOrderDiscountModalOpen}
+        onClose={closeOrderDiscountModal}
+        title="Aplicar desconto no total"
+        description="Escolha desconto em reais ou percentual sobre o total atual do pedido."
+        action={
+          <Button onClick={applyOrderDiscountDraft}>Aplicar desconto</Button>
+        }
+      >
+        <div className="grid gap-5">
+          <div className="grid gap-3 md:grid-cols-[auto_auto_minmax(0,1fr)]">
+            <DiscountModeButton
+              active={orderDiscountDraftMode === 'fixed'}
+              label="R$"
+              onClick={() => setOrderDiscountDraftMode('fixed')}
+            />
+            <DiscountModeButton
+              active={orderDiscountDraftMode === 'percent'}
+              label="%"
+              onClick={() => setOrderDiscountDraftMode('percent')}
+            />
+            <input
+              className="h-12 rounded-full border border-[#d7d7d1] bg-[#f4f4f1] px-4 text-sm text-brand-bark outline-none transition placeholder:text-[#9b9a94] focus:border-brand-sage focus:bg-white"
+              value={orderDiscountDraftValue}
+              onChange={(event) => setOrderDiscountDraftValue(event.target.value)}
+              placeholder={orderDiscountDraftMode === 'fixed' ? '0,00' : '0'}
+            />
+          </div>
+          <div className="grid gap-3 rounded-[22px] bg-[#f8faf8] p-4 md:grid-cols-2">
+            <div>
+              <p className="text-xs uppercase tracking-[0.12em] text-[#8d8a84]">Valor original</p>
+              <p className="mt-2 text-2xl font-bold text-brand-bark">{formatCurrency(subtotalAfterItemsDiscount)}</p>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-[0.12em] text-[#8d8a84]">Valor final</p>
+              <p className="mt-2 text-2xl font-bold text-[#4a9a4c]">{formatCurrency(orderFinalPreview)}</p>
+            </div>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

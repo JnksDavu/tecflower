@@ -95,8 +95,8 @@ export const productsMock: Product[] = [
 
 export const salesViewMock: SalesView = {
   cartItems: [
-    { productId: '1', quantity: 1 },
-    { productId: '3', quantity: 2 },
+    { productId: '1', quantity: 1, discountMode: 'fixed', discountValue: 5 },
+    { productId: '3', quantity: 2, discountMode: 'percent', discountValue: 10 },
   ],
   catalogProducts: productsMock.map((product) => ({
     id: product.id,
