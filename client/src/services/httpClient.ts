@@ -4,6 +4,9 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true';
 type QueryValue = string | number | boolean | undefined;
 type QueryParams = Record<string, QueryValue>;
+interface RequestOptions {
+  signal?: AbortSignal;
+}
 
 const buildUrl = (endpoint: string, query?: QueryParams) => {
   const url = new URL(`${API_URL}${endpoint}`);
@@ -49,20 +52,22 @@ const parseResponse = async <T>(response: Response): Promise<T> => {
 
 export const httpClient = {
   useMocks: USE_MOCKS,
-  get: async <T>(endpoint: string, query?: QueryParams): Promise<T> => {
+  get: async <T>(endpoint: string, query?: QueryParams, options?: RequestOptions): Promise<T> => {
     const response = await fetch(buildUrl(endpoint, query), {
       headers: await getHeaders(),
+      signal: options?.signal,
     });
 
     return parseResponse<T>(response);
   },
-  post: async <TResponse, TBody = unknown>(endpoint: string, body: TBody): Promise<TResponse> => {
+  post: async <TResponse, TBody = unknown>(endpoint: string, body: TBody, options?: RequestOptions): Promise<TResponse> => {
     const response = await fetch(buildUrl(endpoint), {
       method: 'POST',
       headers: await getHeaders({
         'Content-Type': 'application/json',
       }),
       body: JSON.stringify(body),
+      signal: options?.signal,
     });
 
     return parseResponse<TResponse>(response);

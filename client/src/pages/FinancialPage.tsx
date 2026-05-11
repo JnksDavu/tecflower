@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { FullPagePurpleLoader } from '@/components/AppLoaders';
 import { MetricCard } from '@/components/MetricCard';
 import { PageHeader } from '@/components/PageHeader';
 import { Panel } from '@/components/Panel';
@@ -17,12 +18,25 @@ export const FinancialPage = () => {
   const [summary, setSummary] = useState<FinanceSummaryCard[]>([]);
   const [paymentMethods, setPaymentMethods] = useState<FinancePaymentMethod[]>([]);
   const [entries, setEntries] = useState<FinanceEntry[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    financialController.getSummary().then(setSummary);
-    financialController.getPaymentMethods().then(setPaymentMethods);
-    financialController.list().then(setEntries);
+    Promise.all([
+      financialController.getSummary(),
+      financialController.getPaymentMethods(),
+      financialController.list(),
+    ])
+      .then(([nextSummary, nextPaymentMethods, nextEntries]) => {
+        setSummary(nextSummary);
+        setPaymentMethods(nextPaymentMethods);
+        setEntries(nextEntries);
+      })
+      .finally(() => setIsLoading(false));
   }, []);
+
+  if (isLoading) {
+    return <FullPagePurpleLoader/>;
+  }
 
   return (
     <div className="px-4 py-6">

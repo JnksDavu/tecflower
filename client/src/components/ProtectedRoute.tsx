@@ -1,16 +1,13 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { FullPagePurpleLoader } from '@/components/AppLoaders';
 
 export const ProtectedRoute = () => {
   const { isLoading, session } = useAuth();
   const location = useLocation();
 
   if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[#f7f4ed] text-sm font-medium text-[#5b437f]">
-        Carregando sessão...
-      </div>
-    );
+    return <FullPagePurpleLoader/>;
   }
 
   if (!session) {

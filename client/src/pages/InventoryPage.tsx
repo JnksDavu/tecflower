@@ -1,10 +1,11 @@
 import type { FormEvent } from 'react';
 import { useEffect, useMemo, useState } from 'react';
+import { FullPagePurpleLoader, PurpleLoadingAnimation } from '@/components/AppLoaders';
 import { PageHeader } from '@/components/PageHeader';
 import { Panel } from '@/components/Panel';
 import { productController } from '@/controllers/productController';
 import type { Product, ProductStockMovement } from '@/models/types';
-import { FilterOption, InventoryAdjustmentModal, LoadingSpinner, SearchableFilter, statusTone } from '@/features/products/productUi';
+import { FilterOption, InventoryAdjustmentModal, SearchableFilter, statusTone } from '@/features/products/productUi';
 import { formatCurrency } from '@/utils/formatters';
 
 const movementLabels: Record<ProductStockMovement['movementType'], string> = {
@@ -210,6 +211,10 @@ export const InventoryPage = () => {
     });
   };
 
+  if (isLoading && !products.length && !movements.length) {
+    return <FullPagePurpleLoader/>;
+  }
+
   return (
     <div className="px-4 py-6">
       <PageHeader
@@ -225,7 +230,7 @@ export const InventoryPage = () => {
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
           <Panel title="Níveis de estoque" description="Todos os produtos com seus níveis atuais e gatilho de reposição.">
             {isLoading ? (
-              <div className="flex min-h-[180px] items-center justify-center"><LoadingSpinner className="h-9 w-9" /></div>
+              <div className="flex min-h-[180px] items-center justify-center"><PurpleLoadingAnimation className="w-full max-w-[96px]" /></div>
             ) : (
               <div className="grid gap-4">
                 {products.map((product) => (
@@ -253,7 +258,7 @@ export const InventoryPage = () => {
 
           <Panel title="Alertas" description="Produtos com estoque baixo ou zerado.">
             {isLoading ? (
-              <div className="flex min-h-[180px] items-center justify-center"><LoadingSpinner className="h-9 w-9" /></div>
+              <div className="flex min-h-[180px] items-center justify-center"><PurpleLoadingAnimation className="w-full max-w-[96px]" /></div>
             ) : (
               <div className="space-y-4">
                 <div className="rounded-[22px] border border-[#efe1ac] bg-[#fff9e8] p-4">
@@ -299,7 +304,7 @@ export const InventoryPage = () => {
             </label>
           </div>
           {isLoading ? (
-            <div className="flex min-h-[180px] items-center justify-center"><LoadingSpinner className="h-9 w-9" /></div>
+            <div className="flex min-h-[180px] items-center justify-center"><PurpleLoadingAnimation className="w-full max-w-[96px]" /></div>
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full text-left">

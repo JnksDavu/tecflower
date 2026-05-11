@@ -1,10 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { BadgePercent } from 'lucide-react';
+import Lottie from 'lottie-react';
+import { FullPagePurpleLoader } from '@/components/AppLoaders';
 import { Button } from '@/components/Button';
 import { Input } from '@/components/Input';
 import { Modal } from '@/components/Modal';
 import { PageHeader } from '@/components/PageHeader';
 import { Panel } from '@/components/Panel';
+import successAnimation from '@/assets/success.json';
+import pleaseWaitAnimation from '@/assets/please wait.json';
 import { saleController } from '@/controllers/saleController';
 import type { DiscountMode, SaleCartItem, SalesCatalogProduct, SalesCustomer, SalesPaymentMethodOption, SalesView } from '@/models/types';
 import { formatCurrency } from '@/utils/formatters';
@@ -131,6 +135,10 @@ export const SalesPage = () => {
   const [orderNotes, setOrderNotes] = useState('');
   const [statusMessage, setStatusMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isWaitingModalOpen, setIsWaitingModalOpen] = useState(false);
+  const [saleRequestController, setSaleRequestController] = useState<AbortController | null>(null);
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [successCountdown, setSuccessCountdown] = useState(5);
   const [itemDiscountTarget, setItemDiscountTarget] = useState<string | null>(null);
   const [itemDiscountDraftMode, setItemDiscountDraftMode] = useState<DiscountMode>('fixed');
   const [itemDiscountDraftValue, setItemDiscountDraftValue] = useState('0,00');
@@ -159,6 +167,30 @@ export const SalesPage = () => {
       setStatusMessage(error instanceof Error ? error.message : 'Não foi possível carregar a tela de vendas.');
     });
   }, []);
+
+  useEffect(() => {
+    if (!isSuccessModalOpen) {
+      return undefined;
+    }
+
+    setSuccessCountdown(5);
+
+    const intervalId = window.setInterval(() => {
+      setSuccessCountdown((current) => {
+        if (current <= 1) {
+          window.clearInterval(intervalId);
+          setIsSuccessModalOpen(false);
+          return 0;
+        }
+
+        return current - 1;
+      });
+    }, 1000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [isSuccessModalOpen]);
 
   const categories = useMemo(() => {
     if (!view) {
@@ -362,6 +394,19 @@ export const SalesPage = () => {
     setStatusMessage('');
   };
 
+  const closeSuccessModal = () => {
+    setIsSuccessModalOpen(false);
+    setSuccessCountdown(5);
+  };
+
+  const cancelSaleTransition = () => {
+    saleRequestController?.abort();
+    setSaleRequestController(null);
+    setIsWaitingModalOpen(false);
+    setIsSubmitting(false);
+    setStatusMessage('Confirmação da venda cancelada.');
+  };
+
   const clearSale = () => {
     if (!view) {
       return;
@@ -439,6 +484,9 @@ export const SalesPage = () => {
       return;
     }
 
+    const controller = new AbortController();
+    setSaleRequestController(controller);
+    setIsWaitingModalOpen(true);
     setIsSubmitting(true);
 
     try {
@@ -458,13 +506,22 @@ export const SalesPage = () => {
         discountMode,
         discountValue: orderDiscountValue,
         notes: orderNotes,
-      });
+      }, controller.signal);
 
       await loadView();
       setActiveStep('product');
       setCustomerMode('new');
-      setStatusMessage(`Venda #${sale.saleNumber} concluída com sucesso.`);
+      setStatusMessage('');
+      setIsWaitingModalOpen(false);
+      setSaleRequestController(null);
+      setIsSuccessModalOpen(true);
     } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        return;
+      }
+
+      setIsWaitingModalOpen(false);
+      setSaleRequestController(null);
       setStatusMessage(error instanceof Error ? error.message : 'Não foi possível concluir a venda.');
     } finally {
       setIsSubmitting(false);
@@ -472,7 +529,7 @@ export const SalesPage = () => {
   };
 
   if (!view) {
-    return null;
+    return <FullPagePurpleLoader/>;
   }
 
   const itemDiscountProduct = itemDiscountTarget ? productMap.get(itemDiscountTarget) : null;
@@ -915,6 +972,42 @@ export const SalesPage = () => {
           </Panel>
         </aside>
       </div>
+
+      <Modal
+        isOpen={isWaitingModalOpen}
+        onClose={cancelSaleTransition}
+        title="Aguarde um momento"
+        size="md"
+      >
+        <div className="flex flex-col items-center text-center">
+          <div className="w-full max-w-[220px]">
+            <Lottie animationData={pleaseWaitAnimation} loop />
+          </div>
+          <p className="mt-1 text-lg font-semibold text-brand-bark">Confirmando pagamento</p>
+          <p className="mt-2 text-sm text-[#8d8a84]">Estamos registrando a venda e atualizando o estoque.</p>
+          <Button variant="outline" className="mt-6 min-w-[260px]" onClick={cancelSaleTransition}>
+            Cancelar compra
+          </Button>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={isSuccessModalOpen}
+        onClose={closeSuccessModal}
+        title="Parabéns!"
+        size="md"
+      >
+        <div className="flex flex-col items-center text-center">
+          <div className="w-full max-w-[220px]">
+            <Lottie animationData={successAnimation} loop={false} />
+          </div>
+          <p className="mt-1 text-lg font-semibold text-brand-bark">Pagamento concluído com sucesso</p>
+          <p className="mt-2 text-sm text-[#8d8a84]">A venda foi registrada e o estoque já foi atualizado.</p>
+          <Button className="mt-6 min-w-[260px]" onClick={closeSuccessModal}>
+            Fechar ({successCountdown}s)
+          </Button>
+        </div>
+      </Modal>
 
       <Modal
         isOpen={Boolean(itemDiscountTarget)}

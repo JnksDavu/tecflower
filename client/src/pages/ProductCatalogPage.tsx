@@ -1,5 +1,6 @@
 import type { ChangeEvent, FormEvent } from 'react';
 import { useEffect, useMemo, useState } from 'react';
+import { FullPagePurpleLoader, PurpleLoadingAnimation } from '@/components/AppLoaders';
 import { Button } from '@/components/Button';
 import { PageHeader } from '@/components/PageHeader';
 import { Panel } from '@/components/Panel';
@@ -12,7 +13,6 @@ import {
   emptyMetadata,
   FilterOption,
   InventoryAdjustmentModal,
-  LoadingSpinner,
   mapProductToForm,
   ProductFormModal,
   ProductFormState,
@@ -314,6 +314,10 @@ export const ProductCatalogPage = () => {
     }
   };
 
+  if (isLoading && !products.length && !catalogProducts.length) {
+    return <FullPagePurpleLoader/>;
+  }
+
   return (
     <div className="px-4 py-6">
       <PageHeader
@@ -328,7 +332,7 @@ export const ProductCatalogPage = () => {
           <Panel key={stat.label} className="rounded-[22px] border border-[#e6ded2] bg-white p-5 shadow-[0_14px_32px_rgba(55,43,46,0.06)]">
             <p className="text-center text-sm text-[#8d8a84]">{stat.label}</p>
             <div className="mt-3 flex min-h-[36px] items-center justify-center">
-              {isLoading ? <LoadingSpinner className="h-7 w-7" /> : <p className={`text-[28px] font-bold ${stat.tone}`}>{stat.value}</p>}
+              {isLoading ? <PurpleLoadingAnimation className="w-full max-w-[72px]" /> : <p className={`text-[28px] font-bold ${stat.tone}`}>{stat.value}</p>}
             </div>
           </Panel>
         ))}
