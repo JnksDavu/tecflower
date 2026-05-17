@@ -16,6 +16,7 @@ const items = [
     ],
   },
   { to: '/estoque', label: 'Estoque', icon: 'inventory' },
+  { to: '/compras', label: 'Compras', icon: 'purchases' },
   { to: '/financeiro', label: 'Financeiro', icon: 'finance' },
   { to: '/configuracoes', label: 'Configurações', icon: 'settings' },
 ];
@@ -34,6 +35,13 @@ const iconMap = {
   inventory: (
     <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.9">
       <path d="M4 7.5h16v11H4zM8 7.5V5h8v2.5M8 12h8M8 15h5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+  purchases: (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.9">
+      <path d="M5 6.5h2l1.1 7.1a1 1 0 0 0 1 .9h7.8a1 1 0 0 0 1-.8l1.1-5.7H8.2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M9.5 18.5a1.25 1.25 0 1 1 0 .01M16.5 18.5a1.25 1.25 0 1 1 0 .01" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M10 9.5h5M12.5 7v5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   ),
   finance: (

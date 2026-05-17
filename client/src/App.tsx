@@ -4,6 +4,7 @@ import { PublicRoute } from './components/PublicRoute';
 import { AppLayout } from './layouts/AppLayout';
 import { FinancialPage } from './pages/FinancialPage';
 import { InventoryPage } from './pages/InventoryPage';
+import { PurchasesPage } from './pages/PurchasesPage';
 import { ProductCatalogPage } from './pages/ProductCatalogPage';
 import { ProductCategoriesPage } from './pages/ProductCategoriesPage';
 import { ProductTagsPage } from './pages/ProductTagsPage';
@@ -28,6 +29,7 @@ const App = () => {
           <Route path="/produtos/categorias" element={<ProductCategoriesPage />} />
           <Route path="/produtos/tags" element={<ProductTagsPage />} />
           <Route path="/estoque" element={<InventoryPage />} />
+          <Route path="/compras" element={<PurchasesPage />} />
           <Route path="/financeiro" element={<FinancialPage />} />
           <Route path="/configuracoes" element={<ConfigurationsPage />} />
         </Route>
