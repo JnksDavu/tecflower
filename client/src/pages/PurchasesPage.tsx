@@ -1,6 +1,6 @@
 import type { ChangeEvent, FormEvent } from 'react';
 import { useMemo, useState } from 'react';
-import { ClipboardCheck, ClipboardClock, Pencil, Plus, Search, Trash2 } from 'lucide-react';
+import { ClipboardCheck, ClipboardClock, Pencil, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { Input } from '@/components/Input';
 import { Modal } from '@/components/Modal';
@@ -150,10 +150,19 @@ const supplierOptions: FilterOption[] = [
 ];
 
 const statusOptions: FilterOption[] = [
-  { label: 'Todos os status', value: 'all' },
+  { label: 'Todos', value: 'all' },
   { label: 'Solicitado', value: 'requested' },
   { label: 'Entregue', value: 'delivered' },
   { label: 'Cancelado', value: 'cancelled' },
+];
+
+const productOptions: FilterOption[] = [
+  { label: 'Selecionar produto', value: 'none' },
+  ...catalogProducts.map((product) => ({
+    label: product.name,
+    value: product.id,
+    keywords: product.sku,
+  })),
 ];
 
 const createEmptyForm = (): PurchaseFormState => ({
@@ -161,7 +170,7 @@ const createEmptyForm = (): PurchaseFormState => ({
   purchaseDate: '2026-05-17',
   supplierMode: 'supplier',
   supplierId: suppliers[0]?.value || '',
-  expectedDeliveryDate: '2026-05-20',
+  expectedDeliveryDate: '',
   deliveryDate: '',
   description: '',
   notes: '',
@@ -197,8 +206,9 @@ const resolveSupplierName = (mode: SupplierMode, supplierId: string) => {
 
 export const PurchasesPage = () => {
   const [purchases, setPurchases] = useState<PurchaseRecord[]>(purchasesSeed);
-  const [filters, setFilters] = useState({ supplierId: 'all', search: '', status: 'all', purchaseDate: '' });
+  const [filters, setFilters] = useState({ supplierId: 'all', search: '', status: 'all', dateFrom: '', dateTo: '' });
   const [form, setForm] = useState<PurchaseFormState>(createEmptyForm());
+  const [selectedProductId, setSelectedProductId] = useState('none');
   const [editingPurchase, setEditingPurchase] = useState<PurchaseRecord | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -215,11 +225,13 @@ export const PurchasesPage = () => {
             ? purchase.supplierMode === 'no-supplier'
             : purchase.supplierId === filters.supplierId;
       const matchesStatus = filters.status === 'all' || purchase.status === filters.status;
-      const matchesPurchaseDate = !filters.purchaseDate || purchase.purchaseDate === filters.purchaseDate;
+      const purchaseDate = new Date(`${purchase.purchaseDate}T12:00:00`);
+      const matchesDateFrom = !filters.dateFrom || purchaseDate >= new Date(`${filters.dateFrom}T00:00:00`);
+      const matchesDateTo = !filters.dateTo || purchaseDate <= new Date(`${filters.dateTo}T23:59:59`);
       const matchesSearch = !normalizedSearch
         || `${purchase.name} ${purchase.description}`.toLowerCase().includes(normalizedSearch);
 
-      return matchesSupplier && matchesStatus && matchesPurchaseDate && matchesSearch;
+      return matchesSupplier && matchesStatus && matchesDateFrom && matchesDateTo && matchesSearch;
     });
   }, [filters, purchases]);
 
@@ -260,15 +272,31 @@ export const PurchasesPage = () => {
     }));
   };
 
+  const handleProductSelect = (productId: string) => {
+    setSelectedProductId(productId);
+
+    if (productId === 'none') {
+      return;
+    }
+
+    setForm((current) => ({
+      ...current,
+      productIds: current.productIds.includes(productId) ? current.productIds : [...current.productIds, productId],
+    }));
+    setSelectedProductId('none');
+  };
+
   const openCreateModal = () => {
     setEditingPurchase(null);
     setForm(createEmptyForm());
+    setSelectedProductId('none');
     setIsModalOpen(true);
   };
 
   const openEditModal = (purchase: PurchaseRecord) => {
     setEditingPurchase(purchase);
     setForm(mapToForm(purchase));
+    setSelectedProductId('none');
     setIsModalOpen(true);
   };
 
@@ -359,7 +387,7 @@ export const PurchasesPage = () => {
         title="Histórico de compras"
         className="mt-4"  
       >
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_180px_220px_220px]">
+        <div className="grid gap-4 lg:grid-cols-[minmax(160px,0.75fr)_160px_160px_minmax(240px,1.1fr)_150px]">
           <div className="px-1">
             <Input
               label="Descrição da compra"
@@ -368,12 +396,24 @@ export const PurchasesPage = () => {
               placeholder="Pesquise por nome ou descrição"
             />
           </div>
-          <Input
-            label="Data da compra"
-            type="date"
-            value={filters.purchaseDate}
-            onChange={(event) => setFilters((current) => ({ ...current, purchaseDate: event.target.value }))}
-          />
+          <label className="flex flex-col gap-2 px-1 text-sm font-medium text-brand-bark">
+            <span className="pl-1">De</span>
+            <input
+              type="date"
+              value={filters.dateFrom}
+              onChange={(event) => setFilters((current) => ({ ...current, dateFrom: event.target.value }))}
+              className="h-12 rounded-[18px] border border-[#ddd6cb] bg-white px-4 text-sm text-brand-bark outline-none shadow-[0_10px_24px_rgba(55,43,46,0.06)]"
+            />
+          </label>
+          <label className="flex flex-col gap-2 px-1 text-sm font-medium text-brand-bark">
+            <span className="pl-1">Até</span>
+            <input
+              type="date"
+              value={filters.dateTo}
+              onChange={(event) => setFilters((current) => ({ ...current, dateTo: event.target.value }))}
+              className="h-12 rounded-[18px] border border-[#ddd6cb] bg-white px-4 text-sm text-brand-bark outline-none shadow-[0_10px_24px_rgba(55,43,46,0.06)]"
+            />
+          </label>
           <SearchableFilter
             label="Fornecedor"
             value={filters.supplierId}
@@ -399,10 +439,10 @@ export const PurchasesPage = () => {
                 key={purchase.id}
                 className="rounded-[24px] border border-[#e7e0d5] bg-white p-5 shadow-[0_18px_38px_rgba(55,43,46,0.08)]"
               >
-                <div className="grid gap-5 xl:grid-cols-[170px_minmax(220px,1.2fr)_130px_minmax(160px,1fr)_130px_minmax(170px,0.9fr)]">
+                <div className="grid gap-5 xl:grid-cols-[150px_minmax(180px,1fr)_115px_minmax(140px,0.8fr)_115px_minmax(190px,0.9fr)]">
                   <div>
                     <p className="text-[12px] font-semibold uppercase tracking-[0.24em] text-[#ad8c58]">Status</p>
-                    <div className="mt-3 flex gap-2">
+                    <div className="mt-3 flex justify-center gap-2">
                       <button
                         type="button"
                         title="Marcar como solicitado"
@@ -473,7 +513,7 @@ export const PurchasesPage = () => {
                       <p className="mt-3 text-[16px] font-semibold text-brand-bark">{purchase.deliveryDate ? formatDate(purchase.deliveryDate) : 'Pendente'}</p>
                       <p className="mt-2 text-sm text-[#8d8a84]">Data confirmada</p>
                     </div>
-                    <div className="flex shrink-0 gap-2">
+                    <div className="mt-6 flex shrink-0 gap-2">
                       <button
                         type="button"
                         onClick={() => openEditModal(purchase)}
@@ -541,49 +581,50 @@ export const PurchasesPage = () => {
 
           <div className="grid gap-4 md:grid-cols-4">
             {form.supplierMode === 'supplier' ? (
-              <label className="flex w-full flex-col gap-2 text-sm font-medium text-brand-bark">
-                <span>Fornecedor</span>
-                <select
-                  value={form.supplierId}
-                  onChange={handleFormChange('supplierId')}
-                  className="h-12 rounded-[18px] border border-[#d7d7d1] bg-[#f4f4f1] px-4 text-sm text-brand-bark outline-none transition focus:border-brand-sage focus:bg-white"
-                >
-                  {suppliers.map((supplier) => (
-                    <option key={supplier.value} value={supplier.value}>
-                      {supplier.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <SearchableFilter
+                label="Fornecedor"
+                value={form.supplierId}
+                options={supplierOptions.filter((option) => option.value !== 'all' && option.value !== 'no-supplier')}
+                searchPlaceholder="Buscar fornecedor"
+                onSelect={(value) => setForm((current) => ({ ...current, supplierId: value }))}
+              />
             ) : (
               <Input label="Fornecedor" value="Sem fornecedor" disabled />
             )}
             <Input label="Data da compra" type="date" value={form.purchaseDate} onChange={handleFormChange('purchaseDate')} required />
-            <Input label="Data prevista para entrega" type="date" value={form.expectedDeliveryDate} onChange={handleFormChange('expectedDeliveryDate')} required />
+            <Input label="Data prevista para entrega" type="date" value={form.expectedDeliveryDate} onChange={handleFormChange('expectedDeliveryDate')} />
             <Input label="Data de entrega" type="date" value={form.deliveryDate} onChange={handleFormChange('deliveryDate')} />
           </div>
 
-          <div className="space-y-3">
-            <p className="text-sm font-medium text-brand-bark">Produtos vinculados</p>
+          <div className="space-y-3 rounded-[22px] border border-[#e8e1d6] bg-[#faf8f3] p-4">
+            <SearchableFilter
+              label="Adicionar produto"
+              value={selectedProductId}
+              options={productOptions}
+              searchPlaceholder="Buscar produto"
+              onSelect={handleProductSelect}
+            />
             <div className="flex flex-wrap gap-2">
-              {catalogProducts.map((product) => {
-                const isSelected = form.productIds.includes(product.id);
+              {form.productIds.length ? (
+                form.productIds.map((productId) => {
+                  const product = catalogProducts.find((catalogProduct) => catalogProduct.id === productId);
 
-                return (
-                  <button
-                    key={product.id}
-                    type="button"
-                    onClick={() => toggleProduct(product.id)}
-                    className={`rounded-full px-3 py-2 text-sm font-medium transition ${
-                      isSelected
-                        ? 'bg-[#6f3fe4] text-white shadow-[0_12px_24px_rgba(111,63,228,0.18)]'
-                        : 'border border-[#ded8f0] bg-[#faf7ff] text-[#6f3fe4]'
-                    }`}
-                  >
-                    {product.name}
-                  </button>
-                );
-              })}
+                  return product ? (
+                    <button
+                      key={product.id}
+                      type="button"
+                      onClick={() => toggleProduct(product.id)}
+                      className="rounded-full bg-[#6f3fe4] px-3 py-2 text-sm font-medium text-white shadow-[0_12px_24px_rgba(111,63,228,0.18)] transition hover:bg-[#5f34ca]"
+                    >
+                      {product.name}
+                    </button>
+                  ) : null;
+                })
+              ) : (
+                <span className="rounded-full border border-dashed border-[#ddd5ca] px-3 py-2 text-sm text-[#8d8a84]">
+                  Sem produtos vinculados
+                </span>
+              )}
             </div>
           </div>
 
