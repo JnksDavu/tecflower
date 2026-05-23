@@ -1,6 +1,8 @@
 export type ProductStatus = 'Em estoque' | 'Estoque baixo' | 'Sem estoque';
 export type FinanceEntryType = 'entrada' | 'saida';
 export type DiscountMode = 'fixed' | 'percent';
+export type PurchaseStatus = 'requested' | 'delivered' | 'cancelled';
+export type SupplierMode = 'supplier' | 'no-supplier';
 
 export interface ProductCategory {
   id: string;
@@ -92,6 +94,98 @@ export interface ProductStockMovement {
     name: string;
     sku: string;
   };
+}
+
+export interface Supplier {
+  id: string;
+  name: string;
+  document: string;
+  phone: string;
+  email: string;
+  notes?: string;
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface PurchaseProductOption {
+  id: string;
+  name: string;
+  sku: string;
+  price: number;
+  stockQuantity: number;
+}
+
+export interface PurchaseMetadata {
+  suppliers: Supplier[];
+  products: PurchaseProductOption[];
+  statuses: Array<{ id: PurchaseStatus; label: string }>;
+}
+
+export interface PurchaseItem {
+  id?: string;
+  productId: string;
+  productName: string;
+  sku: string;
+  quantityOrdered: number;
+  quantityReceived: number;
+  unitCost: number;
+  totalCost: number;
+}
+
+export interface PurchaseCustomItem {
+  id?: string;
+  name: string;
+  quantity: number;
+  unitCost: number;
+  totalCost: number;
+}
+
+export interface PurchaseRecord {
+  id: string;
+  name: string;
+  purchaseDate: string;
+  supplierMode: SupplierMode;
+  supplierId: string;
+  supplierName: string;
+  expectedDeliveryDate: string;
+  deliveryDate: string;
+  description: string;
+  notes: string;
+  estimatedCost: number;
+  status: PurchaseStatus;
+  productIds: string[];
+  customProducts: string;
+  items: PurchaseItem[];
+  customItems: PurchaseCustomItem[];
+  cancellationReason: string;
+  cancelledAt: string;
+  cancelledBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PurchaseFilters {
+  [key: string]: string | undefined;
+  supplierId?: string;
+  search?: string;
+  status?: string;
+  dateFrom?: string;
+  dateTo?: string;
+}
+
+export interface PurchaseUpsertPayload {
+  name: string;
+  purchaseDate: string;
+  supplierMode: SupplierMode;
+  supplierId?: string;
+  expectedDeliveryDate?: string;
+  deliveryDate?: string;
+  description: string;
+  notes: string;
+  estimatedCost: number;
+  productIds: string[];
+  customProducts: string;
 }
 
 export interface SaleCartItem {
